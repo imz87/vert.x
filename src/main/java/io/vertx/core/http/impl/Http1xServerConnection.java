@@ -47,6 +47,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.impl.future.PromiseInternal;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
@@ -306,7 +307,7 @@ public class Http1xServerConnection extends Http1xConnectionBase<ServerWebSocket
     return serverOrigin;
   }
 
-  Vertx vertx() {
+  public VertxInternal vertx() {
     return vertx;
   }
 

@@ -14,6 +14,7 @@ import io.netty.channel.EventLoop;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http2.Http2Headers;
+import io.netty.handler.codec.http2.Http2Stream;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
@@ -33,7 +34,7 @@ import io.vertx.core.tracing.TracingPolicy;
 
 import static io.vertx.core.spi.metrics.Metrics.METRICS_ENABLED;
 
-class Http2ServerStream extends VertxHttp2Stream<Http2ServerConnection> {
+class Http2ServerStream extends VertxHttpStreamBase<Http2ServerConnection, Http2Stream, Http2Headers> {
 
   protected final Http2Headers headers;
   protected final String scheme;
@@ -56,7 +57,7 @@ class Http2ServerStream extends VertxHttp2Stream<Http2ServerConnection> {
                     String uri,
                     TracingPolicy tracingPolicy,
                     boolean halfClosedRemote) {
-    super(conn, context);
+    super(conn, context, new VertxHttp2ConnectionDelegate(conn));
 
     this.headers = null;
     this.method = method;
@@ -79,7 +80,8 @@ class Http2ServerStream extends VertxHttp2Stream<Http2ServerConnection> {
                     String uri,
                     TracingPolicy tracingPolicy,
                     boolean halfClosedRemote) {
-    super(conn, context);
+
+    super(conn, context, new VertxHttp2ConnectionDelegate(conn));
 
     this.scheme = scheme;
     this.headers = headers;

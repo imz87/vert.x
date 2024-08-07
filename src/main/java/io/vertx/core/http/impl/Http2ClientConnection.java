@@ -182,7 +182,7 @@ class Http2ClientConnection extends Http2ConnectionBase implements HttpClientCon
 
   protected synchronized void onHeadersRead(int streamId, Http2Headers headers, StreamPriority streamPriority, boolean endOfStream) {
     Stream stream = (Stream) stream(streamId);
-    if (!stream.stream.isTrailersReceived()) {
+    if (!stream.isTrailersReceived()) {
       stream.onHeaders(headers, streamPriority);
       if (endOfStream) {
         stream.onEnd();
@@ -222,7 +222,7 @@ class Http2ClientConnection extends Http2ConnectionBase implements HttpClientCon
   }
 
   //
-  static abstract class Stream extends VertxHttp2Stream<Http2ClientConnection> {
+  static abstract class Stream extends VertxHttpStreamBase<Http2ClientConnection, Http2Stream, Http2Headers> {
 
     private final boolean push;
     private HttpResponseHead response;
@@ -245,7 +245,7 @@ class Http2ClientConnection extends Http2ConnectionBase implements HttpClientCon
     protected final long windowSize;
 
     Stream(Http2ClientConnection conn, ContextInternal context, boolean push) {
-      super(conn, context);
+      super(conn, context, new VertxHttp2ConnectionDelegate(conn));
 
       this.push = push;
       this.windowSize = conn.getWindowSize();
