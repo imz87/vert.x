@@ -1491,6 +1491,12 @@ public class HttpClientOptions extends ClientOptionsBase {
     return this;
   }
 
+  @Override
+  public HttpClientOptions setProtocolVersion(HttpVersion protocolVersion) {
+    super.setProtocolVersion(protocolVersion);
+    return this;
+  }
+
   /**
    * @return the pool options
    */
