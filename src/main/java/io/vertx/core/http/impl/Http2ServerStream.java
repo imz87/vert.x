@@ -10,11 +10,14 @@
  */
 package io.vertx.core.http.impl;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.EventLoop;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http2.EmptyHttp2Headers;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
+import io.netty.util.concurrent.FutureListener;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
@@ -35,6 +38,7 @@ import io.vertx.core.tracing.TracingPolicy;
 import static io.vertx.core.spi.metrics.Metrics.METRICS_ENABLED;
 
 class Http2ServerStream extends VertxHttpStreamBase<Http2ServerConnection, Http2Stream, Http2Headers> {
+  private static final MultiMap EMPTY = new Http2HeadersAdaptor(EmptyHttp2Headers.INSTANCE);
 
   protected final Http2Headers headers;
   protected final String scheme;
@@ -57,7 +61,7 @@ class Http2ServerStream extends VertxHttpStreamBase<Http2ServerConnection, Http2
                     String uri,
                     TracingPolicy tracingPolicy,
                     boolean halfClosedRemote) {
-    super(conn, context, new VertxHttp2ConnectionDelegate(conn));
+    super(conn, context);
 
     this.headers = null;
     this.method = method;
@@ -78,9 +82,9 @@ class Http2ServerStream extends VertxHttpStreamBase<Http2ServerConnection, Http2
                     HostAndPort authority,
                     HttpMethod method,
                     String uri,
+                    String serverOrigin,
                     TracingPolicy tracingPolicy,
                     boolean halfClosedRemote) {
-
     super(conn, context, new VertxHttp2ConnectionDelegate(conn));
 
     this.scheme = scheme;
@@ -261,5 +265,72 @@ class Http2ServerStream extends VertxHttpStreamBase<Http2ServerConnection, Http2
     if (metrics != null && !responseEnded) {
       metrics.requestRouted(metric, route);
     }
+  }
+
+  @Override
+  protected void consumeCredits(int len) {
+    conn.consumeCredits(this.stream, len);
+  }
+
+  @Override
+  public void writeFrame(byte type, short flags, ByteBuf payload) {
+    conn.handler.writeFrame(stream, type, flags, payload);
+  }
+  @Override
+  public void writeHeaders(Http2Headers headers, boolean end, int dependency, short weight, boolean exclusive,
+                           boolean checkFlush, FutureListener<Void> promise) {
+    conn.handler.writeHeaders(stream, headers, end, dependency, weight, exclusive, checkFlush, promise);
+  }
+
+  @Override
+  public void writePriorityFrame(StreamPriority priority) {
+    conn.handler.writePriority(stream, priority.getDependency(), priority.getWeight(), priority.isExclusive());
+  }
+
+  @Override
+  public void writeData_(ByteBuf chunk, boolean end, FutureListener<Void> promise) {
+    conn.handler.writeData(stream, chunk, end, promise);
+  }
+
+  @Override
+  public void writeReset_(int streamId, long code) {
+    conn.handler.writeReset(streamId, code);
+  }
+
+  @Override
+  public void init_(VertxHttpStreamBase vertxHttpStream, Http2Stream stream) {
+    this.stream = stream;
+    this.writable = this.conn.handler.encoder().flowController().isWritable(this.stream);
+    stream.setProperty(conn.streamKey, vertxHttpStream);
+  }
+
+  @Override
+  public synchronized int getStreamId() {
+    return stream != null ? stream.id() : -1;
+  }
+
+  @Override
+  public boolean remoteSideOpen() {
+    return stream.state().remoteSideOpen();
+  }
+
+  @Override
+  public boolean hasStream() {
+    return stream != null;
+  }
+
+  @Override
+  public MultiMap getEmptyHeaders() {
+    return EMPTY;
+  }
+
+  @Override
+  public boolean isWritable_() {
+    return writable;
+  }
+
+  @Override
+  public boolean isTrailersReceived_() {
+    return stream.isTrailersReceived();
   }
 }
