@@ -11,6 +11,7 @@
 package io.vertx.core.http.impl;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.EventLoop;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
@@ -85,7 +86,7 @@ class Http2ServerStream extends VertxHttpStreamBase<Http2ServerConnection, Http2
                     String serverOrigin,
                     TracingPolicy tracingPolicy,
                     boolean halfClosedRemote) {
-    super(conn, context, new VertxHttp2ConnectionDelegate(conn));
+    super(conn, context);
 
     this.scheme = scheme;
     this.headers = headers;
@@ -265,6 +266,11 @@ class Http2ServerStream extends VertxHttpStreamBase<Http2ServerConnection, Http2
     if (metrics != null && !responseEnded) {
       metrics.requestRouted(metric, route);
     }
+  }
+
+  @Override
+  protected void consumeCredits(int len) {
+    conn.consumeCredits(this.stream, len);
   }
 
   @Override
