@@ -555,7 +555,7 @@ public class Http2Test extends HttpTest {
     server.requestHandler(req -> {
       assertEquals(requestStreamWeight, req.streamPriority().getWeight());
       assertEquals(requestStreamDependency, req.streamPriority().getDependency());
-      req.response().setStreamPriority(new StreamPriority()
+      req.response().setStreamPriority(new Http2StreamPriority()
         .setDependency(responseStreamDependency)
         .setWeight(responseStreamWeight)
         .setExclusive(false));
@@ -600,12 +600,12 @@ public class Http2Test extends HttpTest {
       });
       assertEquals(requestStreamWeight, req.streamPriority().getWeight());
       assertEquals(requestStreamDependency, req.streamPriority().getDependency());
-      req.response().setStreamPriority(new StreamPriority()
+      req.response().setStreamPriority(new Http2StreamPriority()
         .setDependency(responseStreamDependency)
         .setWeight(responseStreamWeight)
         .setExclusive(false));
       req.response().write("hello");
-      req.response().setStreamPriority(new StreamPriority()
+      req.response().setStreamPriority(new Http2StreamPriority()
         .setDependency(responseStreamDependency2)
         .setWeight(responseStreamWeight2)
         .setExclusive(false));
@@ -693,12 +693,12 @@ public class Http2Test extends HttpTest {
     boolean exclusive = false;
     waitFor(2);
     server.requestHandler(req -> {
-      req.response().setStreamPriority(new StreamPriority()
+      req.response().setStreamPriority(new Http2StreamPriority()
         .setDependency(dependency)
         .setWeight(weight)
         .setExclusive(exclusive));
       req.response().write("hello");
-      req.response().setStreamPriority(new StreamPriority()
+      req.response().setStreamPriority(new Http2StreamPriority()
         .setDependency(dependency)
         .setWeight(weight)
         .setExclusive(exclusive));
@@ -785,7 +785,7 @@ public class Http2Test extends HttpTest {
       req.response().push(HttpMethod.GET, "/pushpath", ar -> {
         assertTrue(ar.succeeded());
         HttpServerResponse pushedResp = ar.result();
-        pushedResp.setStreamPriority(new StreamPriority()
+        pushedResp.setStreamPriority(new Http2StreamPriority()
           .setDependency(pushStreamDependency)
           .setWeight(pushStreamWeight)
           .setExclusive(false));
