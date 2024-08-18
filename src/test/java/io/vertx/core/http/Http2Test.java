@@ -566,7 +566,7 @@ public class Http2Test extends HttpTest {
     client = vertx.createHttpClient(createBaseClientOptions());
     client.request(requestOptions).onComplete(onSuccess(req -> {
       req
-        .setStreamPriority(new StreamPriority()
+        .setStreamPriority(new Http2StreamPriority()
           .setDependency(requestStreamDependency)
           .setWeight(requestStreamWeight)
           .setExclusive(false))
@@ -629,12 +629,12 @@ public class Http2Test extends HttpTest {
           });
           complete();
         }))
-        .setStreamPriority(new StreamPriority()
+        .setStreamPriority(new Http2StreamPriority()
           .setDependency(requestStreamDependency)
           .setWeight(requestStreamWeight)
           .setExclusive(false));
       req.sendHead(h -> {
-        req.setStreamPriority(new StreamPriority()
+        req.setStreamPriority(new Http2StreamPriority()
           .setDependency(requestStreamDependency2)
           .setWeight(requestStreamWeight2)
           .setExclusive(false));
@@ -671,12 +671,12 @@ public class Http2Test extends HttpTest {
             complete();
           });
         }));
-      req.setStreamPriority(new StreamPriority()
+      req.setStreamPriority(new Http2StreamPriority()
         .setDependency(dependency)
         .setWeight(weight)
         .setExclusive(exclusive));
       req.sendHead(h -> {
-        req.setStreamPriority(new StreamPriority()
+        req.setStreamPriority(new Http2StreamPriority()
           .setDependency(dependency)
           .setWeight(weight)
           .setExclusive(exclusive));
@@ -740,7 +740,7 @@ public class Http2Test extends HttpTest {
     client = vertx.createHttpClient(createBaseClientOptions());
     client.request(requestOptions).onComplete(onSuccess(req -> {
       req
-        .setStreamPriority(new StreamPriority()
+        .setStreamPriority(new Http2StreamPriority()
           .setDependency(requestStreamDependency)
           .setWeight(requestStreamWeight)
           .setExclusive(false))
@@ -839,7 +839,7 @@ public class Http2Test extends HttpTest {
           complete();
         }));
       }).setStreamPriority(
-        new StreamPriority()
+        new Http2StreamPriority()
           .setDependency(reqStreamDependency)
           .setWeight(reqStreamWeight)
           .setExclusive(false))
