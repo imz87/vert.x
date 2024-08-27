@@ -32,7 +32,7 @@ import io.vertx.core.http.GoAway;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.StreamPriorityBase;
 import io.vertx.core.http.impl.headers.Http2HeadersAdaptor;
-import io.vertx.core.http.impl.headers.VertxDefaultHttp2Headers;
+import io.vertx.core.http.impl.headers.VertxHttp2Headers;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.spi.metrics.HttpClientMetrics;
@@ -186,7 +186,7 @@ class Http2ClientConnection extends Http2ConnectionBase implements HttpClientCon
   protected synchronized void onHeadersRead(int streamId, Http2Headers headers, StreamPriorityBase streamPriority, boolean endOfStream) {
     HttpStream stream = (HttpStream) stream(streamId);
     if (!stream.isTrailersReceived()) {
-      stream.onHeaders(new VertxDefaultHttp2Headers(headers), streamPriority);
+      stream.onHeaders(new VertxHttp2Headers(headers), streamPriority);
       if (endOfStream) {
         stream.onEnd();
       }

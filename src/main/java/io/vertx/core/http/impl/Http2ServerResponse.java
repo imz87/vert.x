@@ -31,7 +31,7 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.StreamPriorityBase;
 import io.vertx.core.http.StreamResetException;
 import io.vertx.core.http.impl.headers.Http2HeadersAdaptor;
-import io.vertx.core.http.impl.headers.VertxDefaultHttp2Headers;
+import io.vertx.core.http.impl.headers.VertxHttp2Headers;
 import io.vertx.core.impl.future.PromiseInternal;
 import io.vertx.core.net.HostAndPort;
 import io.vertx.core.net.NetSocket;
@@ -319,7 +319,7 @@ public class Http2ServerResponse implements HttpServerResponse, HttpResponse {
       checkHeadWritten();
       DefaultHttp2Headers defaultHttp2Headers = new DefaultHttp2Headers();
       defaultHttp2Headers.status(HttpResponseStatus.CONTINUE.codeAsText());
-      stream.writeHeaders(new VertxDefaultHttp2Headers(defaultHttp2Headers), false, true,
+      stream.writeHeaders(new VertxHttp2Headers(defaultHttp2Headers), false, true,
         null);
       return this;
     }
@@ -342,7 +342,7 @@ public class Http2ServerResponse implements HttpServerResponse, HttpResponse {
     synchronized (conn) {
       checkHeadWritten();
     }
-    stream.writeHeaders(new VertxDefaultHttp2Headers(http2Headers), false, true, handler);
+    stream.writeHeaders(new VertxHttp2Headers(http2Headers), false, true, handler);
   }
 
   @Override
@@ -476,7 +476,7 @@ public class Http2ServerResponse implements HttpServerResponse, HttpResponse {
         invokeHandler = true;
       }
       if (end && trailers != null) {
-        stream.writeHeaders(new VertxDefaultHttp2Headers(trailers), true, true, null);
+        stream.writeHeaders(new VertxHttp2Headers(trailers), true, true, null);
       }
       bodyEndHandler = this.bodyEndHandler;
       endHandler = this.endHandler;
@@ -512,7 +512,7 @@ public class Http2ServerResponse implements HttpServerResponse, HttpResponse {
       }
       prepareHeaders();
       headWritten = true;
-      stream.writeHeaders(new VertxDefaultHttp2Headers(headers), end, checkFlush, null);
+      stream.writeHeaders(new VertxHttp2Headers(headers), end, checkFlush, null);
       return true;
     } else {
       return false;
