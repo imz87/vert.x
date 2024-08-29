@@ -1,6 +1,7 @@
 package io.vertx.core.http.impl;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.EventLoop;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -179,9 +180,15 @@ abstract class HttpStreamImpl<C extends ConnectionBase, S> extends HttpStream<C,
   public void writeHead(HttpRequestHead request, boolean chunked, ByteBuf buf, boolean end, StreamPriorityBase priority,
                         boolean connect, Handler<AsyncResult<Void>> handler) {
     priority(priority);
-    conn.context.emit(null, v -> {
-      writeHeaders(request, buf, end, priority, connect, handler);
-    });
+    ContextInternal ctx = conn.getContext();
+    EventLoop eventLoop = ctx.nettyEventLoop();
+    synchronized (this) {
+      if (shouldQueue(eventLoop)) {
+        queueForWrite(eventLoop, () -> writeHeaders(request, buf, end, priority, connect, handler));
+        return;
+      }
+    }
+    writeHeaders(request, buf, end, priority, connect, handler);
   }
 
   private void writeHeaders(HttpRequestHead request, ByteBuf buf, boolean end, StreamPriorityBase priority,
@@ -253,8 +260,7 @@ abstract class HttpStreamImpl<C extends ConnectionBase, S> extends HttpStream<C,
         if (operation == null) {
           operation = headers.method().toString();
         }
-        trace = tracer.sendRequest(context, SpanKind.RPC, getTracingPolicy(), head, operation,
-          headers_,
+        trace = tracer.sendRequest(context, SpanKind.RPC, getTracingPolicy(), head, operation, headers_,
           HttpUtils.CLIENT_HTTP_REQUEST_TAG_EXTRACTOR);
       }
     });
@@ -301,7 +307,14 @@ abstract class HttpStreamImpl<C extends ConnectionBase, S> extends HttpStream<C,
 
   @Override
   public void reset(Throwable cause) {
-    long code = cause instanceof StreamResetException ? ((StreamResetException) cause).getCode() : 0;
+    long code;
+    if (cause instanceof StreamResetException) {
+      code = ((StreamResetException) cause).getCode();
+    } else if (cause instanceof java.util.concurrent.TimeoutException) {
+      code = 0x08L; // CANCEL
+    } else {
+      code = 0L;
+    }
     conn.context.emit(code, this::writeReset);
   }
 

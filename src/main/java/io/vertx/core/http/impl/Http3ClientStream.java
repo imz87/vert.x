@@ -77,7 +77,7 @@ class Http3ClientStream extends HttpStreamImpl<Http3ClientConnection, QuicStream
 
   @Override
   protected boolean isTryUseCompression() {
-    return this.conn.client.options().isTryUseCompression();
+    return this.conn.client.options().isDecompressionSupported();
   }
 
   @Override

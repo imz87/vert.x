@@ -66,7 +66,7 @@ class Http2ClientStream extends HttpStreamImpl<Http2ClientConnection, Http2Strea
 
   @Override
   protected boolean isTryUseCompression() {
-    return this.conn.client.options().isTryUseCompression();
+    return this.conn.client.options().isDecompressionSupported();
   }
 
   @Override
