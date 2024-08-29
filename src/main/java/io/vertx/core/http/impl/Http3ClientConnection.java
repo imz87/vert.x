@@ -18,6 +18,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.StreamPriorityBase;
 import io.vertx.core.http.impl.headers.Http3HeadersAdaptor;
 import io.vertx.core.http.impl.headers.VertxHttp3Headers;
@@ -211,4 +212,16 @@ class Http3ClientConnection extends Http3ConnectionBase implements HttpClientCon
     });
     return handler;
   }
+
+  @Override
+  public Future<HttpClientRequest> createRequest(ContextInternal context) {
+    return ((HttpClientImpl)client).createRequest(this, context);
+  }
+
+  @Override
+  public long activeStreams() {
+    //TODO: what is the correct logic for this method
+    return concurrency();
+  }
+
 }

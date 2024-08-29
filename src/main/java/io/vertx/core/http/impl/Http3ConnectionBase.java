@@ -536,4 +536,11 @@ public abstract class Http3ConnectionBase extends ConnectionBase implements Http
       context.dispatch(shutdownHandler);
     }
   }
+
+  @Override
+  public Future<Void> shutdown(long timeout, TimeUnit unit) {
+    PromiseInternal<Void> promise = vertx.promise();
+    shutdown(unit.toMillis(timeout), promise);
+    return promise.future();
+  }
 }
