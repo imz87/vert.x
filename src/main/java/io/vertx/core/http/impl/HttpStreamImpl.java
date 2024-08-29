@@ -13,7 +13,6 @@ import io.vertx.core.http.StreamResetException;
 import io.vertx.core.http.impl.headers.VertxHttpHeaders;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.net.impl.ConnectionBase;
-import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.spi.tracing.SpanKind;
 import io.vertx.core.spi.tracing.VertxTracer;
 import io.vertx.core.streams.WriteStream;
@@ -34,8 +33,8 @@ abstract class HttpStreamImpl<C extends ConnectionBase, S> extends HttpStream<C,
 
   abstract VertxHttpHeaders createHttpHeadersWrapper();
 
-  HttpStreamImpl(C conn, ContextInternal context, boolean push, ClientMetrics<?, ?, ?, ?> metrics) {
-    super(conn, context, push, metrics);
+  HttpStreamImpl(C conn, ContextInternal context, boolean push) {
+    super(conn, context, push);
   }
 
   @Override
@@ -243,8 +242,8 @@ abstract class HttpStreamImpl<C extends ConnectionBase, S> extends HttpStream<C,
     head.remoteAddress = conn.remoteAddress();
     createStreamInternal(id, false, streamX -> {
       init(streamX.result());
-      if (metrics != null) {
-        metric = metrics.requestBegin(headers.path().toString(), head);
+      if (metrics() != null) {
+        metric = metrics().requestBegin(headers.path().toString(), head);
       }
       VertxTracer tracer = context.tracer();
       if (tracer != null) {

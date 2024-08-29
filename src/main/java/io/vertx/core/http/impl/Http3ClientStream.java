@@ -19,15 +19,13 @@ import io.vertx.core.http.impl.headers.Http3HeadersAdaptor;
 import io.vertx.core.http.impl.headers.VertxHttp3Headers;
 import io.vertx.core.http.impl.headers.VertxHttpHeaders;
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.tracing.TracingPolicy;
 
 class Http3ClientStream extends HttpStreamImpl<Http3ClientConnection, QuicStreamChannel> {
   private static final MultiMap EMPTY = new Http3HeadersAdaptor(new DefaultHttp3Headers());
 
-  Http3ClientStream(Http3ClientConnection conn, ContextInternal context, boolean push,
-                    ClientMetrics<?, ?, ?, ?> metrics) {
-    super(conn, context, push, metrics);
+  Http3ClientStream(Http3ClientConnection conn, ContextInternal context, boolean push) {
+    super(conn, context, push);
   }
 
   @Override

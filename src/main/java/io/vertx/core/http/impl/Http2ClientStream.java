@@ -15,15 +15,13 @@ import io.vertx.core.http.impl.headers.Http2HeadersAdaptor;
 import io.vertx.core.http.impl.headers.VertxHttp2Headers;
 import io.vertx.core.http.impl.headers.VertxHttpHeaders;
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.tracing.TracingPolicy;
 
 class Http2ClientStream extends HttpStreamImpl<Http2ClientConnection, Http2Stream> {
   private static final MultiMap EMPTY = new Http2HeadersAdaptor(EmptyHttp2Headers.INSTANCE);
 
-  Http2ClientStream(Http2ClientConnection conn, ContextInternal context, boolean push,
-                    ClientMetrics metrics) {
-    super(conn, context, push, metrics);
+  Http2ClientStream(Http2ClientConnection conn, ContextInternal context, boolean push) {
+    super(conn, context, push);
   }
 
   @Override

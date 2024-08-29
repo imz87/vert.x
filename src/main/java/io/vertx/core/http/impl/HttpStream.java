@@ -8,6 +8,7 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.VertxException;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpFrame;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.core.http.StreamPriorityBase;
 import io.vertx.core.http.impl.headers.HeadersMultiMap;
@@ -41,20 +42,16 @@ abstract class HttpStream<C extends ConnectionBase, S> extends VertxHttpStreamBa
   protected long writeWindow;
   protected final long windowSize;
 
-  protected final ClientMetrics metrics;
-
   protected abstract long getWindowSize();
   protected abstract HttpVersion version();
   protected abstract void recycle();
   protected abstract void metricsEnd(HttpStream<?, ?> stream);
 
-  HttpStream(C conn, ContextInternal context, boolean push, ClientMetrics<? ,?, ?, ?> metrics) {
+  HttpStream(C conn, ContextInternal context, boolean push) {
     super(conn, context);
 
     this.push = push;
     this.windowSize = getWindowSize();
-
-    this.metrics = metrics;
   }
 
   void onContinue() {
@@ -97,9 +94,13 @@ abstract class HttpStream<C extends ConnectionBase, S> extends VertxHttpStreamBa
 
   protected void endWritten() {
     requestEnded = true;
-    if (metrics != null) {
-      metrics.requestEnd(metric, bytesWritten());
+    if (conn.metrics() != null) {
+      metrics().requestEnd(metric, bytesWritten());
     }
+  }
+
+  protected ClientMetrics metrics() {
+    return (ClientMetrics) conn.metrics();
   }
 
   @Override
@@ -111,8 +112,8 @@ abstract class HttpStream<C extends ConnectionBase, S> extends VertxHttpStreamBa
 
   @Override
   void onReset(long code) {
-    if (metrics != null) {
-      metrics.requestReset(metric);
+    if (metrics() != null) {
+      metrics().requestReset(metric);
     }
     super.onReset(code);
   }
@@ -152,8 +153,8 @@ abstract class HttpStream<C extends ConnectionBase, S> extends VertxHttpStreamBa
         headers.toHeaderAdapter());
       removeStatusHeaders(headers);
 
-      if (metrics != null) {
-        metrics.responseBegin(metric, response);
+      if (metrics() != null) {
+        metrics().responseBegin(metric, response);
       }
 
       if (headHandler != null) {
@@ -163,14 +164,14 @@ abstract class HttpStream<C extends ConnectionBase, S> extends VertxHttpStreamBa
   }
 
   private void removeStatusHeaders(VertxHttpHeaders headers) {
-    headers.remove(":status");
+    headers.remove(HttpHeaders.PSEUDO_STATUS);
   }
 
   @Override
   void onClose() {
-    if (metrics != null) {
+    if (metrics() != null) {
       if (!requestEnded || !responseEnded) {
-        metrics.requestReset(metric);
+        metrics().requestReset(metric);
       }
     }
     VertxTracer tracer = context.tracer();
@@ -199,5 +200,4 @@ abstract class HttpStream<C extends ConnectionBase, S> extends VertxHttpStreamBa
       closeHandler.handle(null);
     }
   }
-
 }

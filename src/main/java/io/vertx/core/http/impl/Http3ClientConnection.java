@@ -130,7 +130,7 @@ class Http3ClientConnection extends Http3ConnectionBase implements HttpClientCon
   }
 
   private HttpStreamImpl<Http3ClientConnection, QuicStreamChannel> createStream(ContextInternal context) {
-    return new Http3ClientStream(this, context, false, metrics);
+    return new Http3ClientStream(this, context, false);
   }
 
   public void recycle() {

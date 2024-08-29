@@ -159,7 +159,7 @@ class Http2ClientConnection extends Http2ConnectionBase implements HttpClientCon
   }
 
   private HttpStreamImpl<Http2ClientConnection, Http2Stream> createStream(ContextInternal context) {
-    return new Http2ClientStream(this, context, false, metrics);
+    return new Http2ClientStream(this, context, false);
   }
   public void recycle() {
     int timeout = client.options().getHttp2KeepAliveTimeout();
@@ -201,8 +201,7 @@ class Http2ClientConnection extends Http2ConnectionBase implements HttpClientCon
       Handler<HttpClientPush> pushHandler = stream.pushHandler;
       if (pushHandler != null) {
         Http2Stream promisedStream = handler.connection().stream(promisedStreamId);
-        HttpStreamImpl<Http2ClientConnection, Http2Stream> pushStream = new Http2ClientStream(this, context,
-          true, metrics);
+        HttpStreamImpl<Http2ClientConnection, Http2Stream> pushStream = new Http2ClientStream(this, context, true);
         pushStream.init(promisedStream);
         HttpClientPush push = new HttpClientPush(headers, pushStream);
         if (metrics != null) {
