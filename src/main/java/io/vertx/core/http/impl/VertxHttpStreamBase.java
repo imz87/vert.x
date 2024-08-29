@@ -56,10 +56,9 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
   protected abstract void init_(VertxHttpStreamBase vertxHttpStream, S stream);
   protected abstract int getStreamId();
   protected abstract boolean remoteSideOpen();
-  protected abstract boolean hasStream();
   protected abstract MultiMap getEmptyHeaders();
   protected abstract boolean isWritable_();
-  protected abstract boolean isTrailersReceived_();
+  protected abstract boolean isTrailersReceived();
   protected abstract StreamPriorityBase createDefaultStreamPriority();
 
   VertxHttpStreamBase(C conn, ContextInternal context) {
@@ -83,7 +82,6 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
             consumeCredits(len);
           }
         });
-        bytesRead += data.length();
         handleData(data);
       }
     });
@@ -129,6 +127,7 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
   }
 
   void onData(Buffer data) {
+    bytesRead += data.length();
     conn.reportBytesRead(data.length());
     context.execute(data, pending::write);
   }
@@ -192,19 +191,21 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
 
   final void writeHeaders(VertxHttpHeaders headers, boolean end, boolean checkFlush, Handler<AsyncResult<Void>> handler) {
     EventLoop eventLoop = conn.getContext().nettyEventLoop();
-    if (eventLoop.inEventLoop()) {
-      doWriteHeaders(headers, end, checkFlush, handler);
-    } else {
-      eventLoop.execute(() -> doWriteHeaders(headers, end, checkFlush, handler));
+    synchronized (this) {
+      if (shouldQueue(eventLoop)) {
+        queueForWrite(eventLoop, () -> doWriteHeaders(headers, end, checkFlush, handler));
+        return;
+      }
     }
+    doWriteHeaders(headers, end, checkFlush, handler);
   }
 
   void doWriteHeaders(VertxHttpHeaders headers, boolean end, boolean checkFlush, Handler<AsyncResult<Void>> handler) {
     FutureListener<Void> promise = handler == null ? null : context.promise(handler);
-    writeHeaders(headers, end, priority, checkFlush, promise);
     if (end) {
       endWritten();
     }
+    writeHeaders(headers, end, priority, checkFlush, promise);
   }
 
   protected void endWritten() {
@@ -213,11 +214,13 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
   final void writeData(ByteBuf chunk, boolean end, Handler<AsyncResult<Void>> handler) {
     ContextInternal ctx = conn.getContext();
     EventLoop eventLoop = ctx.nettyEventLoop();
-    if (eventLoop.inEventLoop()) {
-      doWriteData(chunk, end, handler);
-    } else {
-      eventLoop.execute(() -> doWriteData(chunk, end, handler));
+    synchronized (this) {
+      if (shouldQueue(eventLoop)) {
+        queueForWrite(eventLoop, () -> doWriteData(chunk, end, handler));
+        return;
+      }
     }
+    doWriteData(chunk, end, handler);
   }
 
   protected boolean shouldQueue(EventLoop eventLoop) {
@@ -245,10 +248,10 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
     bytesWritten += numOfBytes;
     conn.reportBytesWritten(numOfBytes);
     FutureListener<Void> promise = handler == null ? null : context.promise(handler);
-    writeData_(chunk, end, promise);
     if (end) {
       endWritten();
     }
+    writeData_(chunk, end, promise);
   }
 
   final void writeReset(long code) {
@@ -261,7 +264,10 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
   }
 
   protected void doWriteReset(long code) {
-    int streamId = getStreamId();
+    int streamId;
+    synchronized (this) {
+      streamId = getStreamId();
+    }
     if (streamId != -1) {
       writeReset_(streamId, code);
     } else {
@@ -302,16 +308,12 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
   synchronized void updatePriority(StreamPriorityBase priority) {
     if (!this.priority.equals(priority)) {
       this.priority = priority;
-      if (hasStream()) {
+      if (stream != null) {
         writePriorityFrame(priority);
       }
     }
   }
 
   void handlePriorityChange(StreamPriorityBase newPriority) {
-  }
-
-  boolean isTrailersReceived() {
-    return isTrailersReceived_();
   }
 }

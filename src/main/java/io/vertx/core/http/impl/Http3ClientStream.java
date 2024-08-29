@@ -141,11 +141,6 @@ class Http3ClientStream extends HttpStreamImpl<Http3ClientConnection, QuicStream
   }
 
   @Override
-  public boolean hasStream() {
-    return stream != null;
-  }
-
-  @Override
   public MultiMap getEmptyHeaders() {
     return EMPTY;
   }
@@ -156,7 +151,7 @@ class Http3ClientStream extends HttpStreamImpl<Http3ClientConnection, QuicStream
   }
 
   @Override
-  public boolean isTrailersReceived_() {
+  public boolean isTrailersReceived() {
     return false;  //TODO review
   }
 

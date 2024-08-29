@@ -317,11 +317,6 @@ class Http2ServerStream extends VertxHttpStreamBase<Http2ServerConnection, Http2
   }
 
   @Override
-  public boolean hasStream() {
-    return stream != null;
-  }
-
-  @Override
   public MultiMap getEmptyHeaders() {
     return EMPTY;
   }
@@ -332,7 +327,7 @@ class Http2ServerStream extends VertxHttpStreamBase<Http2ServerConnection, Http2
   }
 
   @Override
-  public boolean isTrailersReceived_() {
+  public boolean isTrailersReceived() {
     return stream.isTrailersReceived();
   }
 

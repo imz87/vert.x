@@ -131,11 +131,6 @@ class Http2ClientStream extends HttpStreamImpl<Http2ClientConnection, Http2Strea
   }
 
   @Override
-  public boolean hasStream() {
-    return stream != null;
-  }
-
-  @Override
   public MultiMap getEmptyHeaders() {
     return EMPTY;
   }
@@ -146,7 +141,7 @@ class Http2ClientStream extends HttpStreamImpl<Http2ClientConnection, Http2Strea
   }
 
   @Override
-  public boolean isTrailersReceived_() {
+  public boolean isTrailersReceived() {
     return stream.isTrailersReceived();
   }
 
