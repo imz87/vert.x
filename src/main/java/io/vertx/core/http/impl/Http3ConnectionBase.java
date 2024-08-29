@@ -33,10 +33,11 @@ import io.vertx.core.buffer.impl.VertxByteBufAllocator;
 import io.vertx.core.http.GoAway;
 import io.vertx.core.http.Http2Settings;
 import io.vertx.core.http.Http2StreamPriority;
+import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClosedException;
 import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.StreamPriorityBase;
-import io.vertx.core.impl.EventLoopContext;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.impl.future.PromiseInternal;
 import io.vertx.core.impl.logging.Logger;
@@ -44,6 +45,7 @@ import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.net.impl.ConnectionBase;
 
 import java.util.ArrayDeque;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author <a href="mailto:zolfaghari19@gmail.com">Iman Zolfaghari</a>
@@ -77,7 +79,7 @@ public abstract class Http3ConnectionBase extends ConnectionBase implements Http
   private int windowSize;
   private long maxConcurrentStreams;
 
-  public Http3ConnectionBase(EventLoopContext context, VertxHttp3ConnectionHandler<? extends Http3ConnectionBase> handler) {
+  public Http3ConnectionBase(ContextInternal context, VertxHttp3ConnectionHandler<? extends Http3ConnectionBase> handler) {
     super(context, handler.context());
     this.handler = handler;
     this.handlerContext = chctx;

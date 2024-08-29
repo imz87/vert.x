@@ -16,11 +16,9 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContentDecompressor;
-import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.incubator.codec.quic.QuicChannel;
-import io.netty.util.concurrent.GenericFutureListener;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -29,7 +27,6 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.impl.EventLoopContext;
 import io.vertx.core.impl.future.PromiseInternal;
 import io.vertx.core.net.NetSocket;
 import io.vertx.core.net.ProxyOptions;
@@ -269,7 +266,7 @@ public class HttpChannelConnector {
     clientHandler.connectFuture().addListener(promise);
   }
 
-  private void http3Connected(EventLoopContext context,
+  private void http3Connected(ContextInternal context,
                               Object metric,
                               Channel ch,
                               PromiseInternal<HttpClientConnection> promise) {

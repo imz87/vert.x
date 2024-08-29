@@ -12,24 +12,17 @@
 package io.vertx.core.http.impl;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.EventLoop;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http2.*;
 import io.netty.handler.codec.http2.Http2Error;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.handler.timeout.IdleStateEvent;
-import io.vertx.core.*;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.*;
-import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.GoAway;
 import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.StreamPriorityBase;
 import io.vertx.core.http.impl.headers.Http2HeadersAdaptor;
 import io.vertx.core.http.impl.headers.VertxHttp2Headers;
@@ -165,7 +158,7 @@ class Http2ClientConnection extends Http2ConnectionBase implements HttpClientCon
     return ((HttpClientImpl)client).createRequest(this, context);
   }
 
-  private HttpStreamImpl<Http2ClientConnection, Http2Stream, Http2Headers> createStream(ContextInternal context) {
+  private HttpStreamImpl<Http2ClientConnection, Http2Stream> createStream(ContextInternal context) {
     return new Http2ClientStream(this, context, false, metrics);
   }
   public void recycle() {

@@ -12,8 +12,7 @@
 package io.vertx.core.http.impl;
 
 import io.netty.incubator.codec.http3.Http3SettingsFrame;
-import io.vertx.core.impl.EventLoopContext;
-import io.vertx.core.spi.metrics.ClientMetrics;
+import io.vertx.core.impl.ContextInternal;
 
 import java.util.function.Function;
 
@@ -39,7 +38,7 @@ class VertxHttp3ConnectionHandlerBuilder<C extends Http3ConnectionBase> {
     return this;
   }
 
-  protected VertxHttp3ConnectionHandler<C> build(EventLoopContext context) {
+  protected VertxHttp3ConnectionHandler<C> build(ContextInternal context) {
     return new VertxHttp3ConnectionHandler<>(connectionFactory, context, http3InitialSettings, isServer);
   }
 }

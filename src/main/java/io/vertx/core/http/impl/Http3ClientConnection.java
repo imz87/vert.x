@@ -22,7 +22,6 @@ import io.vertx.core.http.StreamPriorityBase;
 import io.vertx.core.http.impl.headers.Http3HeadersAdaptor;
 import io.vertx.core.http.impl.headers.VertxHttp3Headers;
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.impl.EventLoopContext;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.spi.metrics.HttpClientMetrics;
 
@@ -31,15 +30,15 @@ import io.vertx.core.spi.metrics.HttpClientMetrics;
  */
 class Http3ClientConnection extends Http3ConnectionBase implements HttpClientConnection {
 
-  public final HttpClientImpl client;
+  public final HttpClientBase client;
   private final ClientMetrics metrics;
   private Handler<Void> evictionHandler = DEFAULT_EVICTION_HANDLER;
   private Handler<Long> concurrencyChangeHandler = DEFAULT_CONCURRENCY_CHANGE_HANDLER;
   private long expirationTimestamp;
   private boolean evicted;
 
-  public Http3ClientConnection(HttpClientImpl client,
-                               EventLoopContext context,
+  public Http3ClientConnection(HttpClientBase client,
+                               ContextInternal context,
                                VertxHttp3ConnectionHandler<? extends Http3ConnectionBase> connHandler,
                                ClientMetrics metrics) {
     super(context, connHandler);
@@ -174,9 +173,9 @@ class Http3ClientConnection extends Http3ConnectionBase implements HttpClientCon
   }
 
   public static VertxHttp3ConnectionHandler<Http3ClientConnection> createVertxHttp3ConnectionHandler(
-    HttpClientImpl client,
+    HttpClientBase client,
     ClientMetrics metrics,
-    EventLoopContext context,
+    ContextInternal context,
     boolean upgrade,
     Object socketMetric) {
     HttpClientOptions options = client.options();

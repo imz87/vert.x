@@ -11,7 +11,8 @@
 
 package io.vertx.core.http.impl;
 
-import io.netty.buffer.*;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -36,12 +37,10 @@ import io.vertx.core.http.GoAway;
 import io.vertx.core.http.Http2StreamPriority;
 import io.vertx.core.http.HttpClosedException;
 import io.vertx.core.http.HttpConnection;
-import io.vertx.core.http.StreamPriority;
 import io.vertx.core.http.StreamPriorityBase;
-import io.vertx.core.impl.EventLoopContext;
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.impl.future.PromiseInternal;
 import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.impl.future.PromiseInternal;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.net.impl.ConnectionBase;

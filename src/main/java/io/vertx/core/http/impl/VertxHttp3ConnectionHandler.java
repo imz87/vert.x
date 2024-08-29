@@ -59,7 +59,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.core.http.StreamPriorityBase;
 import io.vertx.core.http.impl.headers.VertxHttpHeaders;
-import io.vertx.core.impl.EventLoopContext;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.net.impl.ConnectionBase;
 
 import java.util.function.Function;
@@ -89,7 +89,7 @@ class VertxHttp3ConnectionHandler<C extends Http3ConnectionBase> extends Channel
 
   public VertxHttp3ConnectionHandler(
     Function<VertxHttp3ConnectionHandler<C>, C> connectionFactory,
-    EventLoopContext context,
+    ContextInternal context,
     Http3SettingsFrame http3InitialSettings, boolean isServer) {
     this.connectionFactory = connectionFactory;
     this.http3InitialSettings = http3InitialSettings;

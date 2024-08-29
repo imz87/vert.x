@@ -86,7 +86,6 @@ class Http2ServerStream extends VertxHttpStreamBase<Http2ServerConnection, Http2
                     HostAndPort authority,
                     HttpMethod method,
                     String uri,
-                    String serverOrigin,
                     TracingPolicy tracingPolicy,
                     boolean halfClosedRemote) {
     super(conn, context);
@@ -270,11 +269,6 @@ class Http2ServerStream extends VertxHttpStreamBase<Http2ServerConnection, Http2
     if (metrics != null && !responseEnded) {
       metrics.requestRouted(metric, route);
     }
-  }
-
-  @Override
-  protected void consumeCredits(int len) {
-    conn.consumeCredits(this.stream, len);
   }
 
   @Override
