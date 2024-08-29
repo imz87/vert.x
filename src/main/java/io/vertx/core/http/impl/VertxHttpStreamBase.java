@@ -42,6 +42,7 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
   protected boolean writable;
   private long bytesRead;
   private long bytesWritten;
+  private int writeInProgress = 0;
   protected boolean isConnect;
 
   protected S stream;
@@ -217,6 +218,20 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
     } else {
       eventLoop.execute(() -> doWriteData(chunk, end, handler));
     }
+  }
+
+  protected boolean shouldQueue(EventLoop eventLoop) {
+    return !eventLoop.inEventLoop() || writeInProgress > 0;
+  }
+
+  protected void queueForWrite(EventLoop eventLoop, Runnable action) {
+    writeInProgress++;
+    eventLoop.execute(() -> {
+      synchronized (this) {
+        writeInProgress--;
+      }
+      action.run();
+    });
   }
 
   void doWriteData(ByteBuf buf, boolean end, Handler<AsyncResult<Void>> handler) {
