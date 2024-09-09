@@ -33,6 +33,10 @@ import io.vertx.core.eventbus.impl.clustered.ClusteredEventBus;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.*;
 import io.vertx.core.http.impl.*;
+import io.vertx.core.impl.deployment.DefaultDeploymentManager;
+import io.vertx.core.impl.deployment.Deployment;
+import io.vertx.core.impl.deployment.DeploymentManager;
+import io.vertx.core.impl.verticle.VerticleManager;
 import io.vertx.core.internal.*;
 import io.vertx.core.internal.net.NetClientInternal;
 import io.vertx.core.internal.threadchecker.BlockedThreadChecker;
@@ -228,8 +232,8 @@ public class VertxImpl implements VertxInternal, MetricsProvider {
     this.nodeSelector = nodeSelector;
     this.eventBus = clusterManager != null ? new ClusteredEventBus(this, options, clusterManager, nodeSelector) : new EventBusImpl(this);
     this.sharedData = new SharedDataImpl(this, clusterManager);
-    this.deploymentManager = new DeploymentManager(this);
-    this.verticleManager = new VerticleManager(this, deploymentManager);
+    this.deploymentManager = new DefaultDeploymentManager(this);
+    this.verticleManager = new VerticleManager(this, DefaultDeploymentManager.log, deploymentManager);
     this.eventExecutorProvider = eventExecutorProvider;
   }
 
@@ -432,29 +436,6 @@ public class VertxImpl implements VertxInternal, MetricsProvider {
   public long setTimer(long delay, Handler<Long> handler) {
     ContextInternal ctx = getOrCreateContext();
     return scheduleTimeout(ctx, false, delay, TimeUnit.MILLISECONDS, ctx.isDeployment(), handler);
-  }
-
-  @Override
-  public <T> PromiseInternal<T> promise() {
-    ContextInternal context = getOrCreateContext();
-    return context.promise();
-  }
-
-  public <T> PromiseInternal<T> promise(Promise<T> p) {
-    if (p instanceof PromiseInternal) {
-      PromiseInternal<T> promise = (PromiseInternal<T>) p;
-      if (promise.context() != null) {
-        return promise;
-      }
-    }
-    PromiseInternal<T> promise = promise();
-    promise.future().onComplete(p);
-    return promise;
-  }
-
-  public void runOnContext(Handler<Void> task) {
-    ContextInternal context = getOrCreateContext();
-    context.runOnContext(task);
   }
 
   // The background pool is used for making blocking calls to legacy synchronous APIs
@@ -843,7 +824,8 @@ public class VertxImpl implements VertxInternal, MetricsProvider {
       // If we are closed use a context less future
       return Future.failedFuture("Vert.x closed");
     } else {
-      return deploymentManager.deployVerticle(verticleSupplier, options);
+      ContextInternal currentContext = getOrCreateContext();
+      return verticleManager.deployVerticle2(currentContext, verticleSupplier, options);
     }
   }
 
@@ -859,7 +841,7 @@ public class VertxImpl implements VertxInternal, MetricsProvider {
     } else {
       future = getOrCreateContext().succeededFuture();
     }
-    return future.compose(v -> deploymentManager.undeployVerticle(deploymentID));
+    return future.compose(v -> deploymentManager.undeploy(deploymentID));
   }
 
   @Override
@@ -1144,7 +1126,7 @@ public class VertxImpl implements VertxInternal, MetricsProvider {
     });
     return new WorkerPool(shared.executor(), shared.metrics()) {
       @Override
-      void close() {
+      public void close() {
         closeFuture.close();
       }
     };

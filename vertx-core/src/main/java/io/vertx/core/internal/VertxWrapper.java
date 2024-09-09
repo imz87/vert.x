@@ -23,6 +23,7 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.*;
 import io.vertx.core.impl.*;
+import io.vertx.core.impl.deployment.Deployment;
 import io.vertx.core.internal.threadchecker.BlockedThreadChecker;
 import io.vertx.core.net.NetClient;
 import io.vertx.core.net.NetClientOptions;
@@ -154,11 +155,6 @@ public abstract class VertxWrapper implements VertxInternal {
   }
 
   @Override
-  public void runOnContext(Handler<Void> action) {
-    delegate.runOnContext(action);
-  }
-
-  @Override
   public Future<Void> close() {
     return delegate.close();
   }
@@ -236,16 +232,6 @@ public abstract class VertxWrapper implements VertxInternal {
   @Override
   public Handler<Throwable> exceptionHandler() {
     return delegate.exceptionHandler();
-  }
-
-  @Override
-  public <T> PromiseInternal<T> promise() {
-    return delegate.promise();
-  }
-
-  @Override
-  public <T> PromiseInternal<T> promise(Promise<T> promise) {
-    return delegate.promise(promise);
   }
 
   @Override
