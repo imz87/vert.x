@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 import static io.vertx.core.http.HttpMethod.OPTIONS;
+import static io.vertx.core.net.impl.ChannelProvider.*;
 
 /**
  * Performs the channel configuration and connection according to the client options and the protocol version.
@@ -102,7 +103,7 @@ public class HttpChannelConnector {
     List<ChannelHandler> removedHandlers = new ArrayList<>();
     for (Map.Entry<String, ChannelHandler> stringChannelHandlerEntry : pipeline) {
       ChannelHandler handler = stringChannelHandlerEntry.getValue();
-      if (!(handler instanceof SslHandler) && !(handler.getClass().getSimpleName().equals("QuicheQuicClientCodec"))) {
+      if (!(handler instanceof SslHandler) && !(SSL_CHANNEL_NAME.equals(stringChannelHandlerEntry.getKey()))) {
         removedHandlers.add(handler);
       }
     }
@@ -274,23 +275,9 @@ public class HttpChannelConnector {
     VertxHttp3ConnectionHandler<Http3ClientConnection> clientHandler;
     try {
       clientHandler = Http3ClientConnection.createVertxHttp3ConnectionHandler(client, metrics, context, false, metric);
-
-      QuicChannel.newBootstrap(ch)
-        .handler(clientHandler.getHttp3ConnectionHandler())
-        .streamHandler(clientHandler.getStreamHandler())
-        .localAddress(ch.localAddress())
-        .remoteAddress(ch.remoteAddress())
-        .connect()
-        .addListener((io.netty.util.concurrent.Future<QuicChannel> future) -> {
-          if(!future.isSuccess()) {
-            connectFailed(ch, future.cause(), promise);
-            return;
-          }
-
-          QuicChannel quicChannel = future.get();
-          quicChannel.pipeline().addLast(clientHandler.getUserEventHandler());
-        });
-
+      ch.pipeline().addLast("handler", clientHandler.getHttp3ConnectionHandler());
+      ch.pipeline().addLast(clientHandler.getUserEventHandler());
+      ch.flush();
     } catch (Exception e) {
       connectFailed(ch, e, promise);
       return;
