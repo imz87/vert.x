@@ -161,7 +161,9 @@ class Http3ClientConnection extends Http3ConnectionBase implements HttpClientCon
   }
 
   @Override
-  protected synchronized void onHeadersRead(VertxHttpStreamBase<?, ?> stream, Http3Headers headers, StreamPriorityBase streamPriority, boolean endOfStream) {
+  protected synchronized void onHeadersRead(VertxHttpStreamBase<?, ?> stream, Http3Headers headers,
+                                            StreamPriorityBase streamPriority, boolean endOfStream,
+                                            QuicStreamChannel streamChannel) {
     if (!stream.isTrailersReceived()) {
       stream.onHeaders(new VertxHttp3Headers(headers), streamPriority);
       if (endOfStream) {
@@ -229,6 +231,6 @@ class Http3ClientConnection extends Http3ConnectionBase implements HttpClientCon
 
   @Override
   public long activeStreams() {
-    throw new RuntimeException("We have no access to active streams in HTTP/3!");
+    return getActiveQuicStreamChannels().size();
   }
 }

@@ -11,7 +11,6 @@
 
 package io.vertx.core.http;
 
-import io.netty.incubator.codec.http3.DefaultHttp3SettingsFrame;
 import io.netty.incubator.codec.http3.Http3SettingsFrame;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.GenIgnore;
@@ -36,30 +35,36 @@ import java.util.Set;
 @JsonGen(publicConverter = false)
 public class Http3Settings {
 
+  public final static Set<Long> VALID_H3_SETTINGS_KEYS = Set.of(
+    Http3SettingsFrame.HTTP3_SETTINGS_QPACK_MAX_TABLE_CAPACITY,
+    Http3SettingsFrame.HTTP3_SETTINGS_MAX_FIELD_SECTION_SIZE,
+    Http3SettingsFrame.HTTP3_SETTINGS_QPACK_BLOCKED_STREAMS
+  );
+
   public final static long HTTP3_SETTINGS_ENABLE_CONNECT_PROTOCOL = 0x08;
   public final static long HTTP3_SETTINGS_H3_DATAGRAM = 0x33;
   public final static long HTTP3_SETTINGS_ENABLE_METADATA = 0x4d44;
 
   /**
-   * Default HTTP/3 spec value for {@link #getQpackMaxTableCapacity} : {@code 0}
+   * Default HTTP/3 spec value for {@link #getQpackMaxTableCapacity} : {@code 4096}
    */
-  public static final long DEFAULT_QPACK_MAX_TABLE_CAPACITY = 0;
+  public static final long DEFAULT_QPACK_MAX_TABLE_CAPACITY = 4096;
   /**
-   * Default HTTP/3 spec value for {@link #getMaxFieldSectionSize} : {@code 0x7fffffffffffffffL}
+   * Default HTTP/3 spec value for {@link #getMaxFieldSectionSize} : {@code 16384}
    */
-  public static final long DEFAULT_MAX_FIELD_SECTION_SIZE = Long.MAX_VALUE;
+  public static final long DEFAULT_MAX_FIELD_SECTION_SIZE = 16384;
   /**
-   * Default HTTP/3 spec value for {@link #getQpackMaxBlockedStreams} : {@code 0}
+   * Default HTTP/3 spec value for {@link #getQpackMaxBlockedStreams} : {@code 256}
    */
-  public static final long DEFAULT_QPACK_BLOCKED_STREAMS = 0;
+  public static final long DEFAULT_QPACK_BLOCKED_STREAMS = 256;
   /**
    * Default HTTP/3 spec value for {@link #getEnableConnectProtocol} : {@code 0}
    */
   public static final long DEFAULT_ENABLE_CONNECT_PROTOCOL = 0;
   /**
-   * Default HTTP/3 spec value for {@link #getH3Datagram} : {@code 0}
+   * Default HTTP/3 spec value for {@link #getH3Datagram} : {@code 1}
    */
-  public static final long DEFAULT_H3_DATAGRAM = 0;
+  public static final long DEFAULT_H3_DATAGRAM = 1;
   /**
    * Default HTTP/3 spec value for {@link #getEnableMetadata} : {@code 0}
    */

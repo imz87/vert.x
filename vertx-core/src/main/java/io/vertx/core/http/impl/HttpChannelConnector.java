@@ -295,7 +295,8 @@ public class HttpChannelConnector {
       clientHandler = Http3ClientConnection.createVertxHttp3ConnectionHandler(client, metrics, context, false, metric
         , authority, pooled);
       ch.pipeline().addLast("handler", clientHandler.getHttp3ConnectionHandler());
-      ch.pipeline().addLast(clientHandler.getUserEventHandler());
+//      ch.pipeline().addLast(clientHandler.getUserEventHandler());
+      ch.pipeline().addLast(clientHandler.getQuicChannelHandler());
       ch.flush();
     } catch (Exception e) {
       connectFailed(ch, e, promise);
