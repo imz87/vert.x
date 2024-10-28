@@ -17,7 +17,7 @@
   <parent>
     <groupId>io.vertx</groupId>
     <artifactId>vertx5-parent</artifactId>
-    <version>3</version>
+    <version>6</version>
   </parent>
 
   <artifactId>vertx-core-aggregator</artifactId>
@@ -49,7 +49,6 @@
     <junit.version>4.13.2</junit.version>
     <harmcrest.version>2.2</harmcrest.version>
     <assertj.version>3.4.1</assertj.version>
-    <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
   </properties>
 
   <dependencyManagement>

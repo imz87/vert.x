@@ -49,7 +49,6 @@ public class Http2ServerResponse implements HttpServerResponse, HttpResponse {
   private final ChannelHandlerContext ctx;
   private final Http2ServerConnection conn;
   private final boolean push;
-  private final String contentEncoding;
   private final Http2Headers headers = new DefaultHttp2Headers();
   private Http2HeadersAdaptor headersMap;
   private Http2Headers trailers;
@@ -71,13 +70,11 @@ public class Http2ServerResponse implements HttpServerResponse, HttpResponse {
 
   public Http2ServerResponse(Http2ServerConnection conn,
                              Http2ServerStream stream,
-                             boolean push,
-                             String contentEncoding) {
+                             boolean push) {
     this.stream = stream;
     this.ctx = conn.handlerContext;
     this.conn = conn;
     this.push = push;
-    this.contentEncoding = contentEncoding;
   }
 
   boolean isPush() {
@@ -458,9 +455,6 @@ public class Http2ServerResponse implements HttpServerResponse, HttpResponse {
 
   private void prepareHeaders() {
     headers.status(status.codeAsText()); // Could be optimized for usual case ?
-    if (contentEncoding != null && headers.get(HttpHeaderNames.CONTENT_ENCODING) == null) {
-      headers.set(HttpHeaderNames.CONTENT_ENCODING, contentEncoding);
-    }
     // Sanitize
     if (stream.method == HttpMethod.HEAD || status == HttpResponseStatus.NOT_MODIFIED) {
       headers.remove(HttpHeaders.TRANSFER_ENCODING);
@@ -558,7 +552,7 @@ public class Http2ServerResponse implements HttpServerResponse, HttpResponse {
           putHeader(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(contentLength));
         }
         if (headers.get(HttpHeaderNames.CONTENT_TYPE) == null) {
-          String contentType = MimeMapping.getMimeTypeForFilename(filename);
+          String contentType = MimeMapping.mimeTypeForFilename(filename);
           if (contentType != null) {
             putHeader(HttpHeaderNames.CONTENT_TYPE, contentType);
           }

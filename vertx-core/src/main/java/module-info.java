@@ -23,6 +23,7 @@ module io.vertx.core {
   // Optional
 
   requires static com.fasterxml.jackson.databind;
+  requires static io.netty.transport.classes.io_uring;
   requires static io.netty.transport.classes.epoll;
   requires static io.netty.transport.classes.kqueue;
   requires static io.netty.transport.unix.common;
@@ -32,20 +33,18 @@ module io.vertx.core {
 
   requires static io.vertx.codegen.api;
   requires static io.vertx.codegen.json;
+  requires static io.vertx.docgen;
 
   // Compile time only
 
   requires static org.apache.logging.log4j;
   requires static org.slf4j;
-  requires static vertx.docgen;
 
   // Uses
 
   uses io.vertx.core.spi.VertxServiceProvider;
   uses io.vertx.core.spi.VerticleFactory;
   uses io.vertx.core.spi.JsonFactory;
-  uses io.vertx.core.spi.transport.Transport;
-  uses io.vertx.core.spi.context.executor.EventExecutorProvider;
 
   // API
 
@@ -67,6 +66,7 @@ module io.vertx.core {
   exports io.vertx.core.streams;
   exports io.vertx.core.spi;
   exports io.vertx.core.file;
+  exports io.vertx.core.transport;
 
   // SPI
 
@@ -93,30 +93,30 @@ module io.vertx.core {
   exports io.vertx.core.internal.tls;
   exports io.vertx.core.internal.threadchecker;
   exports io.vertx.core.internal.concurrent;
+  exports io.vertx.core.internal.resource;
 
   // Testing
 
-  exports io.vertx.core.impl to io.vertx.tests;
-  exports io.vertx.core.impl.cpu to io.vertx.tests;
-  exports io.vertx.core.impl.future to io.vertx.tests;
-  exports io.vertx.core.impl.utils to io.vertx.tests;
-  exports io.vertx.core.net.impl to io.vertx.tests;
-  exports io.vertx.core.net.impl.endpoint to io.vertx.tests;
-  exports io.vertx.core.shareddata.impl to io.vertx.tests;
-  exports io.vertx.core.buffer.impl to io.vertx.tests;
-  exports io.vertx.core.streams.impl to io.vertx.tests;
-  exports io.vertx.core.eventbus.impl to io.vertx.tests;
-  exports io.vertx.core.eventbus.impl.clustered to io.vertx.tests;
-  exports io.vertx.core.spi.cluster.impl to io.vertx.tests;
-  exports io.vertx.core.file.impl to io.vertx.tests;
-  exports io.vertx.core.http.impl to io.vertx.tests;
-  exports io.vertx.core.http.impl.headers to io.vertx.tests;
-  exports io.vertx.core.http.impl.ws to io.vertx.tests;
-  exports io.vertx.core.json.pointer.impl to io.vertx.tests;
-  exports io.vertx.core.impl.transports to io.vertx.tests;
-  exports io.vertx.core.net.impl.pkcs1 to io.vertx.tests;
-  exports io.vertx.core.spi.cluster.impl.selector to io.vertx.tests;
-  exports io.vertx.core.impl.verticle to io.vertx.tests;
-  exports io.vertx.core.impl.deployment to io.vertx.tests;
+  exports io.vertx.core.impl to io.vertx.core.tests;
+  exports io.vertx.core.impl.cpu to io.vertx.core.tests;
+  exports io.vertx.core.impl.future to io.vertx.core.tests;
+  exports io.vertx.core.impl.utils to io.vertx.core.tests;
+  exports io.vertx.core.net.impl to io.vertx.core.tests;
+  exports io.vertx.core.shareddata.impl to io.vertx.core.tests;
+  exports io.vertx.core.buffer.impl to io.vertx.core.tests;
+  exports io.vertx.core.streams.impl to io.vertx.core.tests;
+  exports io.vertx.core.eventbus.impl to io.vertx.core.tests;
+  exports io.vertx.core.eventbus.impl.clustered to io.vertx.core.tests;
+  exports io.vertx.core.spi.cluster.impl to io.vertx.core.tests;
+  exports io.vertx.core.file.impl to io.vertx.core.tests;
+  exports io.vertx.core.http.impl to io.vertx.core.tests;
+  exports io.vertx.core.http.impl.headers to io.vertx.core.tests;
+  exports io.vertx.core.http.impl.ws to io.vertx.core.tests;
+  exports io.vertx.core.json.pointer.impl to io.vertx.core.tests;
+  exports io.vertx.core.impl.transports to io.vertx.core.tests;
+  exports io.vertx.core.net.impl.pkcs1 to io.vertx.core.tests;
+  exports io.vertx.core.spi.cluster.impl.selector to io.vertx.core.tests;
+  exports io.vertx.core.impl.verticle to io.vertx.core.tests;
+  exports io.vertx.core.impl.deployment to io.vertx.core.tests;
 
 }

@@ -24,7 +24,7 @@ import io.vertx.core.net.endpoint.LoadBalancer;
 import io.vertx.core.net.NetSocket;
 import io.vertx.core.net.ProxyOptions;
 import io.vertx.core.net.ProxyType;
-import io.vertx.core.net.endpoint.EndpointServer;
+import io.vertx.core.net.endpoint.ServerEndpoint;
 import io.vertx.core.streams.Pipe;
 import io.vertx.core.streams.ReadStream;
 
@@ -1049,29 +1049,20 @@ public class HTTPExamples {
     });
   }
 
-  public void example52(HttpServer server) {
-
-    server.webSocketHandler(webSocket -> {
-      if (webSocket.path().equals("/myapi")) {
-        webSocket.reject();
-      } else {
-        // Do something
-      }
-    });
-  }
-
   public void exampleAsynchronousHandshake(HttpServer server) {
-    server.webSocketHandler(webSocket -> {
-      Promise<Integer> promise = Promise.promise();
-      webSocket.setHandshake(promise.future());
-      authenticate(webSocket.headers(), ar -> {
+    server.webSocketHandshakeHandler(handshake -> {
+      authenticate(handshake.headers(), ar -> {
         if (ar.succeeded()) {
-          // Terminate the handshake with the status code 101 (Switching Protocol)
-          // Reject the handshake with 401 (Unauthorized)
-          promise.complete(ar.result() ? 101 : 401);
+          if (ar.result()) {
+            // Terminate the handshake with the status code 101 (Switching Protocol)
+            handshake.accept();
+          } else {
+            // Reject the handshake with 401 (Unauthorized)
+            handshake.reject(401);
+          }
         } else {
           // Will send a 500 error
-          promise.fail(ar.cause());
+          handshake.reject(500);
         }
       });
     });
@@ -1457,7 +1448,7 @@ public class HTTPExamples {
       .build();
   }
 
-  private static int indexOfEndpoint(List<? extends EndpointServer> endpoints) {
+  private static int indexOfEndpoint(List<? extends ServerEndpoint> endpoints) {
     return 0;
   }
 

@@ -45,13 +45,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
- * This class is optimised for performance when used on the same event loop that is was passed to the handler with.
- * However it can be used safely from other threads.
- *
- * The internal state is protected using the synchronized keyword. If always used on the same event loop, then
- * we benefit from biased locking which makes the overhead of synchronized near zero.
- *
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 public class NetSocketImpl extends VertxConnection implements NetSocketInternal {
@@ -95,7 +88,7 @@ public class NetSocketImpl extends VertxConnection implements NetSocketInternal 
     this.metrics = metrics;
     this.messageHandler = new DataMessageHandler();
     this.negotiatedApplicationLayerProtocol = negotiatedApplicationLayerProtocol;
-    this.pending = new InboundMessageQueue<>(context.nettyEventLoop(), context) {
+    this.pending = new InboundMessageQueue<>(context.eventLoop(), context.executor()) {
       @Override
       protected void handleResume() {
         NetSocketImpl.this.doResume();
@@ -395,9 +388,7 @@ public class NetSocketImpl extends VertxConnection implements NetSocketInternal 
     @Override
     public void handle(Object msg) {
       if (msg instanceof ByteBuf) {
-        msg = VertxHandler.safeBuffer((ByteBuf) msg);
-        ByteBuf byteBuf = (ByteBuf) msg;
-        Buffer buffer = BufferInternal.buffer(byteBuf);
+        Buffer buffer = BufferInternal.safeBuffer((ByteBuf) msg);
         pending.write(buffer);
       } else {
         handleInvalid(msg);

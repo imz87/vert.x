@@ -33,6 +33,7 @@ import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.vertx.core.*;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.WebSocketVersion;
 import io.vertx.core.internal.buffer.BufferInternal;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpVersion;
@@ -61,12 +62,6 @@ import static io.netty.handler.codec.http.websocketx.WebSocketVersion.*;
 import static io.vertx.core.http.HttpHeaders.*;
 
 /**
- *
- * This class is optimised for performance when used on the same event loop. However it can be used safely from other threads.
- *
- * The internal state is protected using the synchronized keyword. If always used on the same event loop, then
- * we benefit from biased locking which makes the overhead of synchronized near zero.
- *
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 public class Http1xClientConnection extends Http1xConnection implements HttpClientConnectionInternal {
@@ -216,7 +211,7 @@ public class Http1xClientConnection extends Http1xConnection implements HttpClie
 
   static CharSequence determineCompressionAcceptEncoding() {
     if (isBrotliAvailable() && isZstdAvailable()) {
-      return DEFLATE_GZIP_ZSTD_BR;
+      return DEFLATE_GZIP_ZSTD_BR_SNAPPY;
     }
     else if (!isBrotliAvailable() && isZstdAvailable()) {
       return DEFLATE_GZIP_ZSTD;
@@ -427,7 +422,7 @@ public class Http1xClientConnection extends Http1xConnection implements HttpClie
       super(context, promise, id);
 
       this.conn = conn;
-      this.queue = new InboundMessageQueue<>(conn.context.nettyEventLoop(), context) {
+      this.queue = new InboundMessageQueue<>(conn.context.eventLoop(), context.executor()) {
         @Override
         protected void handleResume() {
           conn.doResume();
@@ -863,7 +858,7 @@ public class Http1xClientConnection extends Http1xConnection implements HttpClie
   }
 
   private void handleResponseChunk(Stream stream, ByteBuf chunk) {
-    Buffer buff = BufferInternal.buffer(VertxHandler.safeBuffer(chunk));
+    Buffer buff = BufferInternal.safeBuffer(chunk);
     int len = buff.length();
     stream.bytesRead += len;
     stream.handleChunk(buff);
@@ -937,7 +932,7 @@ public class Http1xClientConnection extends Http1xConnection implements HttpClie
     MultiMap headers,
     boolean allowOriginHeader,
     WebSocketClientOptions options,
-    WebsocketVersion vers,
+    WebSocketVersion vers,
     List<String> subProtocols,
     long handshakeTimeout,
     boolean registerWriteHandlers,
@@ -949,9 +944,9 @@ public class Http1xClientConnection extends Http1xConnection implements HttpClie
         // Netty requires an absolute url
         wsuri = new URI((ssl ? "https:" : "http:") + "//" + server.host() + ":" + server.port() + requestURI);
       }
-      WebSocketVersion version =
-         WebSocketVersion.valueOf((vers == null ?
-           WebSocketVersion.V13 : vers).toString());
+      io.netty.handler.codec.http.websocketx.WebSocketVersion version =
+         io.netty.handler.codec.http.websocketx.WebSocketVersion.valueOf((vers == null ?
+           io.netty.handler.codec.http.websocketx.WebSocketVersion.V13 : vers).toString());
       HttpHeaders nettyHeaders;
       if (headers != null) {
         nettyHeaders = new DefaultHttpHeaders();
@@ -999,8 +994,8 @@ public class Http1xClientConnection extends Http1xConnection implements HttpClie
         }
         if (future.isSuccess()) {
 
-          VertxHandler<WebSocketConnection> handler = VertxHandler.create(ctx -> {
-            WebSocketConnection conn = new WebSocketConnection(context, ctx, false, TimeUnit.SECONDS.toMillis(options.getClosingTimeout()), client.metrics());
+          VertxHandler<WebSocketConnectionImpl> handler = VertxHandler.create(ctx -> {
+            WebSocketConnectionImpl conn = new WebSocketConnectionImpl(context, ctx, false, TimeUnit.SECONDS.toMillis(options.getClosingTimeout()), client.metrics());
             WebSocketImpl webSocket = new WebSocketImpl(
               context,
               conn,
@@ -1046,7 +1041,7 @@ public class Http1xClientConnection extends Http1xConnection implements HttpClie
   }
 
   static WebSocketClientHandshaker newHandshaker(
-    URI webSocketURL, WebSocketVersion version, String subprotocol,
+    URI webSocketURL, io.netty.handler.codec.http.websocketx.WebSocketVersion version, String subprotocol,
     boolean allowExtensions, boolean allowOriginHeader, HttpHeaders customHeaders, int maxFramePayloadLength,
     boolean performMasking) {
     WebSocketDecoderConfig config = WebSocketDecoderConfig.newBuilder()

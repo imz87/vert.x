@@ -15,9 +15,9 @@ import io.vertx.core.http.*;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.internal.PromiseInternal;
+import io.vertx.test.core.Repeat;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.Assume;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -27,7 +27,6 @@ public class VirtualThreadHttpTest extends VertxTestBase {
 
   private VertxInternal vertx;
 
-  @Before
   public void setUp() throws Exception {
     super.setUp();
     vertx = (VertxInternal) super.vertx;
@@ -40,7 +39,7 @@ public class VirtualThreadHttpTest extends VertxTestBase {
     server.requestHandler(req -> {
       req.response().end("Hello World");
     });
-    server.listen(8088, "localhost").toCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    server.listen(8088, "localhost").await(10, TimeUnit.SECONDS);
     vertx.createVirtualThreadContext().runOnContext(v -> {
       HttpClient client = vertx.createHttpClient();
       for (int i = 0; i < 100; ++i) {
@@ -48,7 +47,7 @@ public class VirtualThreadHttpTest extends VertxTestBase {
         HttpClientResponse resp = req.send().await();
         Buffer body = resp.body().await();
         String bodyString = body.toString(StandardCharsets.UTF_8);
-        assertEquals("Hello World", body.toString());
+        assertEquals("Hello World", bodyString);
       }
       testComplete();
     });
@@ -63,7 +62,7 @@ public class VirtualThreadHttpTest extends VertxTestBase {
     server.requestHandler(req -> {
       req.response().end("Hello World");
     });
-    server.listen(8088, "localhost").toCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    server.listen(8088, "localhost").await(10, TimeUnit.SECONDS);
     HttpClient client = vertx.createHttpClient();
     vertx.createVirtualThreadContext().runOnContext(v -> {
       for (int i = 0; i < 100; ++i) {
@@ -83,8 +82,8 @@ public class VirtualThreadHttpTest extends VertxTestBase {
     try {
       await();
     } finally {
-      server.close().toCompletionStage().toCompletableFuture().get();
-      client.close().toCompletionStage().toCompletableFuture().get();
+      server.close().await();
+      client.close().await();
     }
   }
 
@@ -94,7 +93,7 @@ public class VirtualThreadHttpTest extends VertxTestBase {
     HttpServer server = vertx.createHttpServer();
     server.requestHandler(req -> {
     });
-    server.listen(8088, "localhost").toCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    server.listen(8088, "localhost").await(10, TimeUnit.SECONDS);
     vertx.createVirtualThreadContext().runOnContext(v -> {
       HttpClient client = vertx.createHttpClient();
       ContextInternal ctx = vertx.getOrCreateContext();

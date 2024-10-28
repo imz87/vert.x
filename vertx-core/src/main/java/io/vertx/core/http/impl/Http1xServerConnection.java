@@ -31,11 +31,11 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.ServerWebSocketHandshake;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.internal.buffer.BufferInternal;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.PromiseInternal;
 import io.vertx.core.net.NetSocket;
@@ -181,7 +181,7 @@ public class Http1xServerConnection extends Http1xConnection implements HttpServ
       handleError(content);
       return;
     }
-    Buffer buffer = BufferInternal.buffer(VertxHandler.safeBuffer(content.content()));
+    Buffer buffer = BufferInternal.safeBuffer(content.content());
     Http1xServerRequest request = requestInProgress;
     request.handleContent(buffer);
     //TODO chunk trailers
@@ -285,7 +285,7 @@ public class Http1xServerConnection extends Http1xConnection implements HttpServ
     return vertx;
   }
 
-  void createWebSocket(Http1xServerRequest request, PromiseInternal<ServerWebSocket> promise) {
+  void createWebSocket(Http1xServerRequest request, PromiseInternal<ServerWebSocketHandshake> promise) {
     context.execute(() -> {
       if (request != responseInProgress) {
         promise.fail("Invalid request");

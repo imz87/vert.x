@@ -28,12 +28,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.*;
 import io.vertx.core.internal.buffer.BufferInternal;
-import io.vertx.core.http.Cookie;
-import io.vertx.core.http.HttpClosedException;
-import io.vertx.core.http.HttpHeaders;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.VertxInternal;
@@ -53,15 +49,6 @@ import java.util.Set;
 import static io.vertx.core.http.HttpHeaders.*;
 
 /**
- *
- * This class is optimised for performance when used on the same event loop that is was passed to the handler with.
- * However it can be used safely from other threads.
- *
- * The internal state is protected using the synchronized keyword. If always used on the same event loop, then
- * we benefit from biased locking which makes the overhead of synchronized near zero.
- *
- * It's important we don't have different locks for connection and request/response to avoid deadlock conditions
- *
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 public class Http1xServerResponse implements HttpServerResponse, HttpResponse {
@@ -459,7 +446,7 @@ public class Http1xServerResponse implements HttpServerResponse, HttpResponse {
       }
 
       if (!headers.contains(HttpHeaders.CONTENT_TYPE)) {
-        String contentType = MimeMapping.getMimeTypeForFilename(filename);
+        String contentType = MimeMapping.mimeTypeForFilename(filename);
         if (contentType != null) {
           headers.set(HttpHeaders.CONTENT_TYPE, contentType);
         }

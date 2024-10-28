@@ -47,14 +47,6 @@ import java.util.Set;
 import static io.vertx.core.spi.metrics.Metrics.METRICS_ENABLED;
 
 /**
- * This class is optimised for performance when used on the same event loop that is was passed to the handler with.
- * However it can be used safely from other threads.
- * <p>
- * The internal state is protected by using the connection as a lock. If always used on the same event loop, then
- * we benefit from biased locking which makes the overhead of synchronized near zero.
- * <p>
- * It's important we don't have different locks for connection and request/response to avoid deadlock conditions
- *
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 public class Http1xServerRequest extends HttpServerRequestInternal implements io.vertx.core.spi.observability.HttpRequest {
@@ -97,7 +89,7 @@ public class Http1xServerRequest extends HttpServerRequestInternal implements io
     this.conn = conn;
     this.context = context;
     this.request = request;
-    this.queue = new InboundMessageQueue<>(context.nettyEventLoop(), context) {
+    this.queue = new InboundMessageQueue<>(context.eventLoop(), context.executor()) {
       @Override
       protected void handleMessage(Object elt) {
         if (elt == InboundBuffer.END_SENTINEL) {
@@ -386,25 +378,22 @@ public class Http1xServerRequest extends HttpServerRequestInternal implements io
 
   @Override
   public Future<ServerWebSocket> toWebSocket() {
-    return webSocket().map(ws -> {
-      ws.accept();
-      return ws;
-    });
+    return webSocketHandshake().compose(handshake -> handshake.accept());
   }
 
   /**
    * @return a future of the un-accepted WebSocket
    */
-  Future<ServerWebSocket> webSocket() {
-    PromiseInternal<ServerWebSocket> promise = context.promise();
-    webSocket(promise);
+  Future<ServerWebSocketHandshake> webSocketHandshake() {
+    PromiseInternal<ServerWebSocketHandshake> promise = context.promise();
+    webSocketHandshake(promise);
     return promise.future();
   }
 
   /**
    * Handle the request when a WebSocket upgrade header is present.
    */
-  private void webSocket(PromiseInternal<ServerWebSocket> promise) {
+  private void webSocketHandshake(PromiseInternal<ServerWebSocketHandshake> promise) {
     BufferInternal body = BufferInternal.buffer();
     boolean[] failed = new boolean[1];
     handler(buff -> {
