@@ -612,8 +612,7 @@ public class Http1xServerResponse implements HttpServerResponse, HttpResponse {
     } else {
       // Set content-length header automatically
       if (contentLength >= 0 && !headers.contains(HttpHeaders.CONTENT_LENGTH) && !headers.contains(HttpHeaders.TRANSFER_ENCODING)) {
-        String value = contentLength == 0 ? "0" : String.valueOf(contentLength);
-        headers.set(HttpHeaders.CONTENT_LENGTH, value);
+        headers.set(HttpHeaders.CONTENT_LENGTH, HttpUtils.positiveLongToString(contentLength));
       }
     }
     if (headersEndHandler != null) {
@@ -694,14 +693,14 @@ public class Http1xServerResponse implements HttpServerResponse, HttpResponse {
   }
 
   @Override
-  public boolean reset(long code) {
+  public Future<Void> reset(long code) {
     synchronized (conn) {
       if (written) {
-        return false;
+        return context.failedFuture("Response written");
       }
     }
     conn.close();
-    return true;
+    return context.succeededFuture();
   }
 
   @Override

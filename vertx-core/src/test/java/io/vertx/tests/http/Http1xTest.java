@@ -2828,7 +2828,7 @@ public class Http1xTest extends HttpTest {
       req1.response().onComplete(onFailure(err -> {
         // Should never happen
       }));
-      assertTrue(req1.reset(0));
+      assertTrue(req1.reset(0).succeeded());
       for (String uri : Arrays.asList("/second", "/third")) {
         client
           .request(new RequestOptions(requestOptions).setURI(uri))
@@ -3017,13 +3017,14 @@ public class Http1xTest extends HttpTest {
           .onComplete(onSuccess(req -> {
             req.response().onComplete(onFailure(err -> {
             }));
-            assertTrue(req.reset());
-            client.request(new RequestOptions(requestOptions).setURI("some-uri"))
-              .compose(HttpClientRequest::send)
-              .onComplete(resp -> {
-                assertEquals(1, numReq.get());
-                complete();
-              });
+            req.reset().onComplete(onSuccess(v2 -> {
+              client.request(new RequestOptions(requestOptions).setURI("some-uri"))
+                .compose(HttpClientRequest::send)
+                .onComplete(resp -> {
+                  assertEquals(1, numReq.get());
+                  complete();
+                });
+            }));
           }));
       });
       await();
@@ -3085,7 +3086,7 @@ public class Http1xTest extends HttpTest {
             req2
               .response().onComplete(onFailure(err -> complete()));
             req2.sendHead().onComplete(onSuccess(v -> {
-              assertTrue(req2.reset());
+              assertTrue(req2.reset().succeeded());
             }));
           });
       }));
@@ -3152,7 +3153,7 @@ public class Http1xTest extends HttpTest {
           req2.response().onComplete(onFailure(resp -> complete()));
           req2.sendHead();
           doReset.thenAccept(v2 -> {
-            assertTrue(req2.reset());
+            assertTrue(req2.reset().succeeded());
           });
         }));
       });
@@ -3240,11 +3241,11 @@ public class Http1xTest extends HttpTest {
                 }));
             });
             req1.sendHead().onComplete(v -> {
-              assertTrue(req1.reset());
+              assertTrue(req1.reset().succeeded());
             });
           } else {
             req1.sendHead().onComplete(v -> {
-              assertTrue(req1.reset());
+              assertTrue(req1.reset().succeeded());
             });
             client.request(new RequestOptions(requestOptions).setURI("/somepath"))
               .compose(req -> req
@@ -5510,6 +5511,8 @@ public class Http1xTest extends HttpTest {
   private void testEmptyHostPortionOfHostHeader(String hostHeader, int expectedPort) throws Exception {
     server.requestHandler(req -> {
       assertEquals("", req.authority().host());
+      assertTrue(((HttpServerRequestInternal) req).isValidAuthority());
+      assertEquals("", req.authority().host());
       assertEquals(expectedPort, req.authority().port());
       req.response().end();
     });
@@ -5526,6 +5529,7 @@ public class Http1xTest extends HttpTest {
   public void testMissingHostHeader() throws Exception {
     server.requestHandler(req -> {
       assertEquals(null, req.authority());
+      assertFalse(((HttpServerRequestInternal) req).isValidAuthority());
       testComplete();
     });
     startServer(testAddress);

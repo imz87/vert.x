@@ -13,7 +13,6 @@ package io.vertx.core.net.impl;
 import io.netty.bootstrap.AbstractBootstrap;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFuture;
@@ -25,6 +24,7 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.handler.traffic.GlobalTrafficShapingHandler;
 import io.netty.incubator.codec.quic.QuicChannel;
 import io.netty.util.concurrent.GenericFutureListener;
+import io.vertx.core.*;
 import io.vertx.core.Closeable;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -32,11 +32,14 @@ import io.vertx.core.Promise;
 import io.vertx.core.buffer.impl.PartialPooledByteBufAllocator;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.impl.HttpUtils;
+import io.vertx.core.internal.CloseSequence;
 import io.vertx.core.impl.HostnameResolver;
 import io.vertx.core.internal.CloseSequence;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.PromiseInternal;
 import io.vertx.core.internal.VertxInternal;
+import io.vertx.core.impl.buffer.VertxByteBufAllocator;
 import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.internal.logging.LoggerFactory;
 import io.vertx.core.internal.net.SslChannelProvider;
@@ -56,7 +59,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Base class for TCP servers
+ * Vert.x TCP server
  *
  * @author <a href="http://tfox.org">Tim Fox</a>
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
@@ -593,12 +596,7 @@ public class NetServerImpl implements Closeable, MetricsProvider, NetServerInter
     }
     ServerBootstrap bootstrap = new ServerBootstrap();
     bootstrap.group(vertx.getAcceptorEventLoopGroup(), channelBalancer.workers());
-    if (options.isSsl()) {
-      bootstrap.childOption(ChannelOption.ALLOCATOR, PartialPooledByteBufAllocator.INSTANCE);
-    } else {
-      bootstrap.childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
-    }
-
+    bootstrap.childOption(ChannelOption.ALLOCATOR, VertxByteBufAllocator.POOLED_ALLOCATOR);
     bootstrap.childHandler(channelBalancer);
     applyConnectionOptions(localAddress.isDomainSocket(), bootstrap);
     return bootstrap;

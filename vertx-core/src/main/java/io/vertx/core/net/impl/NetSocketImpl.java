@@ -23,10 +23,12 @@ import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.impl.HttpUtils;
 import io.vertx.core.internal.buffer.BufferInternal;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.http.ClientAuth;
+import io.vertx.core.http.impl.HttpUtils;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.PromiseInternal;
 import io.vertx.core.internal.concurrent.InboundMessageQueue;
@@ -325,7 +327,7 @@ public class NetSocketImpl extends VertxConnection implements NetSocketInternal 
                 sslOptions.isHttp3(), clientSSLOptions.getSslHandshakeTimeout(), clientSSLOptions.getSslHandshakeTimeoutUnit());
             } else {
               sslHandler = provider.createServerHandler(sslOptions.isUseAlpn(), sslOptions.isHttp3(),
-                sslOptions.getSslHandshakeTimeout(), sslOptions.getSslHandshakeTimeoutUnit(), null);
+                sslOptions.getSslHandshakeTimeout(), sslOptions.getSslHandshakeTimeoutUnit(), HttpUtils.socketAddressToHostAndPort(chctx.channel().remoteAddress()), null);
             }
             chctx.pipeline().addFirst("ssl", sslHandler);
             channelPromise.addListener(p);
