@@ -151,9 +151,11 @@ class Http2ServerStream extends VertxHttpStreamBase<Http2ServerConnection, Http2
   }
 
   @Override
-  protected void doWriteReset(long code) {
+  protected void doWriteReset(long code, Promise<Void> promise) {
     if (!requestEnded || !responseEnded) {
-      super.doWriteReset(code);
+      super.doWriteReset(code, promise);
+    } else {
+      promise.fail("Request ended");
     }
   }
 
@@ -291,8 +293,8 @@ class Http2ServerStream extends VertxHttpStreamBase<Http2ServerConnection, Http2
   }
 
   @Override
-  public void writeReset_(int streamId, long code) {
-    conn.handler.writeReset(streamId, code);
+  public void writeReset_(int streamId, long code, FutureListener<Void> listener) {
+    conn.handler.writeReset(streamId, code, listener);
   }
 
   @Override

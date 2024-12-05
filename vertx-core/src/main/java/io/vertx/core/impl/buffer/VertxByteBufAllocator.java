@@ -10,11 +10,7 @@
  */
 package io.vertx.core.impl.buffer;
 
-import io.netty.buffer.AbstractByteBufAllocator;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.buffer.UnpooledByteBufAllocator;
+import io.netty.buffer.*;
 import io.netty.util.internal.PlatformDependent;
 import io.vertx.core.buffer.impl.VertxHeapByteBuf;
 import io.vertx.core.buffer.impl.VertxUnsafeHeapByteBuf;
@@ -24,12 +20,15 @@ public abstract class VertxByteBufAllocator extends AbstractByteBufAllocator {
   /**
    * Vert.x pooled allocator.
    */
-  public static final ByteBufAllocator POOLED_ALLOCATOR = new PooledByteBufAllocator(true);
+  public static final ByteBufAllocator POOLED_ALLOCATOR;
 
-  /**
-   * Vert.x shared un-pooled allocator.
-   */
-  public static final ByteBufAllocator UNPOOLED_ALLOCATOR = new UnpooledByteBufAllocator(false);
+  static {
+    ByteBufAllocator pooledAllocator = ByteBufAllocator.DEFAULT;
+    if (pooledAllocator instanceof UnpooledByteBufAllocator) {
+      pooledAllocator = new AdaptiveByteBufAllocator();
+    }
+    POOLED_ALLOCATOR = pooledAllocator;
+  }
 
   private static final VertxByteBufAllocator UNSAFE_IMPL = new VertxByteBufAllocator() {
     @Override
@@ -49,7 +48,7 @@ public abstract class VertxByteBufAllocator extends AbstractByteBufAllocator {
 
   @Override
   protected ByteBuf newDirectBuffer(int initialCapacity, int maxCapacity) {
-    return UNPOOLED_ALLOCATOR.directBuffer(initialCapacity, maxCapacity);
+    return UnpooledByteBufAllocator.DEFAULT.directBuffer(initialCapacity, maxCapacity);
   }
 
   @Override
