@@ -7,6 +7,8 @@ open module io.vertx.core.tests {
   requires io.vertx.core;
   requires io.vertx.core.logging;
 
+  requires io.netty.tcnative.classes.openssl;
+
   requires static assertj.core;
   requires static org.hamcrest;
 

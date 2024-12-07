@@ -134,7 +134,7 @@ public class VertxTestBase extends AsyncTestBase {
   public void setUp() throws Exception {
     super.setUp();
     vinit();
-    VertxOptions options = getOptions();
+    VertxOptions options = getOptions().setBlockedThreadCheckInterval(100000000000L);
     boolean nativeTransport = options.getPreferNativeTransport();
     vertx = vertx(options);
     if (nativeTransport && !vertx.isNativeTransportEnabled()) {

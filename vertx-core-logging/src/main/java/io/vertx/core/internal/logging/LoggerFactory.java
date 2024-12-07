@@ -15,6 +15,7 @@ import io.vertx.core.logging.JULLogDelegateFactory;
 import io.vertx.core.spi.logging.LogDelegate;
 import io.vertx.core.spi.logging.LogDelegateFactory;
 
+import java.io.*;
 /**
  * <strong>For internal logging purposes only</strong>.
  *
@@ -23,12 +24,28 @@ import io.vertx.core.spi.logging.LogDelegateFactory;
 public class LoggerFactory {
 
   private static volatile LogDelegateFactory delegateFactory;
+  private static LogDelegate log;
 
   static {
     initialise();
     // Do not log before being fully initialized (a logger extension may use Vert.x classes)
-    LogDelegate log = delegateFactory.createDelegate(LoggerFactory.class.getName());
+    log = delegateFactory.createDelegate(LoggerFactory.class.getName());
     log.debug("Using " + delegateFactory.getClass().getName());
+    System.setOut(createLoggingProxy());
+  }
+
+  private static PrintStream createLoggingProxy() {
+    return new PrintStream(new ByteArrayOutputStream(){
+      @Override
+      public synchronized void write(byte[] b, int off, int len) {
+        byte[] subArray = new byte[len];
+        System.arraycopy(b, 0, subArray, 0, len);
+        String text = new String(subArray);
+        if(text.endsWith("\n"))
+          text = text.substring(0, text.lastIndexOf("\n"));
+        log.info(text);
+      }
+    }, true);
   }
 
   private static synchronized void initialise() {
