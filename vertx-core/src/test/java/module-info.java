@@ -7,6 +7,8 @@ open module io.vertx.core.tests {
   requires io.vertx.core;
   requires io.vertx.core.logging;
 
+  requires io.netty.tcnative.classes.openssl;
+
   requires static assertj.core;
   requires static org.hamcrest;
 
@@ -40,8 +42,9 @@ open module io.vertx.core.tests {
   requires io.netty.incubator.codec.http3;
   requires io.netty.resolver.dns;
   requires io.netty.incubator.codec.classes.quic;
+  requires org.bouncycastle.pkix;
 
-    provides VerticleFactory with ClasspathVerticleFactory, io.vertx.tests.vertx.AccessEventBusFromInitVerticleFactory;
+  provides VerticleFactory with ClasspathVerticleFactory, io.vertx.tests.vertx.AccessEventBusFromInitVerticleFactory;
 
   // Cluster manager implementations overrides them (TCK)
   exports io.vertx.tests.ha;

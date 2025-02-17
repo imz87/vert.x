@@ -6,7 +6,7 @@ module io.vertx.core.logging {
 
   // Optional
 
-  requires static org.apache.logging.log4j;
+  requires org.apache.logging.log4j;
   requires static org.slf4j;
 
   // API

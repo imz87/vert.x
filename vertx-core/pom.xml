@@ -177,7 +177,7 @@
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
-      <scope>test</scope>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
@@ -203,6 +203,24 @@
       <artifactId>jmh-core</artifactId>
       <version>${jmh.version}</version>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk18on</artifactId>
+      <version>1.78</version> <!-- Make sure to use the latest stable version -->
+    </dependency>
+<!--
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bc-pkix</artifactId>
+      <version>1.70</version> &lt;!&ndash; Same here, ensure this is the latest &ndash;&gt;
+    </dependency>
+-->
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-jdk18on</artifactId>
+      <version>1.78</version> <!-- Same here -->
     </dependency>
 
   </dependencies>
@@ -242,7 +260,7 @@
             <additionalClasspathElements>
               <!-- Can we remove this one ??? -->
               <additionalClasspathElement>${project.build.testSourceDirectory}</additionalClasspathElement>
-              <additionalClasspathElement>${project.basedir}/src/test/classpath/jul</additionalClasspathElement>
+<!--              <additionalClasspathElement>${project.basedir}/src/test/classpath/jul</additionalClasspathElement>-->
               <additionalClasspathElement>${project.basedir}/src/test/classpath/sourceverticle</additionalClasspathElement>
             </additionalClasspathElements>
             <systemPropertyVariables>
