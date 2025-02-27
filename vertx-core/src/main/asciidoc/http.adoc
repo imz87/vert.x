@@ -358,7 +358,7 @@ to arbitrary places on your filesystem. See <<Security notes, security notes>> f
 ==== Handling cookies
 
 You use {@link io.vertx.core.http.HttpServerRequest#getCookie(String)} to retrieve
-a cookie by name, or use {@link io.vertx.core.http.HttpServerRequest#cookieMap()} to retrieve all the cookies.
+a cookie by name, or use {@link io.vertx.core.http.HttpServerRequest#cookies()} to retrieve all the cookies.
 
 To remove a cookie, use {@link io.vertx.core.http.HttpServerResponse#removeCookie(String)}.
 
@@ -773,9 +773,9 @@ Whenever the response needs to be sent without compression you can set the heade
 
 Be aware that compression may be able to reduce network traffic but is more CPU-intensive.
 
-To address this latter issue Vert.x allows you to tune the 'compression level' parameter that is native of the gzip/deflate compression algorithms.
+To address this latter issue Vert.x allows you to tune the 'compression level' parameter that is native of the gzip/deflate compression algorithms and also set the minimum response content size threshold for compression.
 
-Compression level allows to configure gizp/deflate algorithms in terms of the compression ratio of the resulting data and the computational cost of the compress/decompress operation.
+Compression level allows to configure gzip/deflate algorithms in terms of the compression ratio of the resulting data and the computational cost of the compress/decompress operation.
 
 The compression level is an integer value ranged from '1' to '9', where '1' means lower compression ratio but fastest algorithm and '9' means maximum compression ratio available but a slower algorithm.
 
@@ -787,6 +787,10 @@ the more the level increases.
 
 By default - if compression is enabled via {@link io.vertx.core.http.HttpServerOptions#setCompressionSupported} - Vert.x will use '6' as compression level,
 but the parameter can be configured to address any case with {@link io.vertx.core.http.HttpServerOptions#setCompressionLevel}.
+
+It may not make sense to compress responses under certain size thresholds where the trade-off between CPU and saved network bytes is not beneficial.
+The minimum response content size threshold for compression can be configured via {@link io.vertx.core.http.HttpServerOptions#setCompressionContentSizeThreshold}.
+For example, if set to '100', responses under 100 bytes will not be compressed. By default, it is '0' which means all content can be compressed.
 
 === HTTP compression algorithms
 
@@ -1124,6 +1128,31 @@ no need to set the `Content-Length` of the request up-front.
 [source,$lang]
 ----
 {@link examples.HTTPExamples#example41}
+----
+
+==== Form submissions
+
+You can send http form submissions bodies with the {@link io.vertx.core.http.HttpClientRequest#send(io.vertx.core.http.ClientForm)}
+variant.
+
+[source,$lang]
+----
+{@link examples.HTTPExamples#sendForm}
+----
+
+By default, the form is submitted with the `application/x-www-form-urlencoded` content type header. You can set
+the `content-type` header to `multipart/form-data` instead
+
+[source,$lang]
+----
+{@link examples.HTTPExamples#sendMultipart}
+----
+
+If you want to upload files and send attributes, you can create a {@link io.vertx.core.http.ClientMultipartForm} instead.
+
+[source,$lang]
+----
+{@link examples.HTTPExamples#sendMultipartWithFileUpload}
 ----
 
 ==== Request timeouts

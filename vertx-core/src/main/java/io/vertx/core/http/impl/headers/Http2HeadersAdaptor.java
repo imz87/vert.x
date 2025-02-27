@@ -12,6 +12,17 @@ package io.vertx.core.http.impl.headers;
 
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Headers;
+import io.vertx.core.MultiMap;
+import io.vertx.core.http.impl.HttpUtils;
+import io.vertx.core.internal.http.HttpHeadersInternal;
+
+import java.util.AbstractList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:zolfaghari19@gmail.com">Iman Zolfaghari</a>

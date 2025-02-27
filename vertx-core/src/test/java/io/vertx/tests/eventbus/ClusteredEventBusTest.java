@@ -13,11 +13,18 @@ package io.vertx.tests.eventbus;
 
 import io.vertx.core.*;
 import io.vertx.core.eventbus.*;
+import io.vertx.core.eventbus.impl.clustered.ClusteredEventBus;
 import io.vertx.core.internal.VertxInternal;
-import io.vertx.core.spi.cluster.RegistrationListener;
+import io.vertx.core.net.NetClientOptions;
+import io.vertx.core.net.NetServerOptions;
+import io.vertx.core.net.SocketAddress;
+import io.vertx.core.spi.VertxMetricsFactory;
+import io.vertx.core.spi.cluster.ClusterManager;
+import io.vertx.core.spi.metrics.TCPMetrics;
+import io.vertx.core.spi.metrics.VertxMetrics;
+import io.vertx.test.fakecluster.FakeClusterManager;
 import io.vertx.tests.shareddata.AsyncMapTest.SomeClusterSerializableObject;
 import io.vertx.tests.shareddata.AsyncMapTest.SomeSerializableObject;
-import io.vertx.core.spi.cluster.impl.NodeSelector;
 import io.vertx.core.spi.cluster.RegistrationUpdateEvent;
 import io.vertx.test.core.TestUtils;
 import io.vertx.test.tls.Cert;
@@ -33,7 +40,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -670,5 +676,81 @@ public class ClusteredEventBusTest extends ClusteredEventBusTestBase {
 
     await();
 
+  }
+
+  @Test
+  public void testPreserveMessageOrderingOnContext() {
+    int num = 256;
+    startNodes(2);
+    ClusterManager clusterManager = ((VertxInternal) vertices[0]).getClusterManager();
+    if (clusterManager instanceof FakeClusterManager) {
+      // Other CM will exhibit latency for this one we must fake it
+      FakeClusterManager fakeClusterManager = (FakeClusterManager) clusterManager;
+      fakeClusterManager.getRegistrationsLatency(500);
+    }
+    AtomicInteger received = new AtomicInteger();
+    vertices[1].eventBus().consumer(ADDRESS1, msg -> {
+      int val = received.getAndIncrement();
+      assertEquals(val, msg.body());
+      if (val == num - 1) {
+        testComplete();
+      }
+    });
+    Context ctx = vertices[0].getOrCreateContext();
+    ctx.runOnContext(v -> {
+      for (int i = 0;i < num;i++) {
+        vertices[0].eventBus().send(ADDRESS1, i);
+      }
+    });
+    await();
+  }
+
+  @Test
+  public void testSocketCleanup() {
+    startNodes(1);
+    vertices[0].eventBus().consumer(ADDRESS1, msg -> {
+      msg.reply("pong");
+    });
+    AtomicInteger numberOfOutboundConnections = new AtomicInteger();
+    AtomicInteger numberOfInboundConnections = new AtomicInteger();
+    Vertx vertx = vertx(() -> Vertx.builder()
+      .withClusterManager(getClusterManager())
+      .withMetrics(options -> new VertxMetrics() {
+        @Override
+        public TCPMetrics<?> createNetClientMetrics(NetClientOptions options) {
+          return new TCPMetrics<>() {
+            @Override
+            public Object connected(SocketAddress remoteAddress, String remoteName) {
+              numberOfOutboundConnections.incrementAndGet();
+              return null;
+            }
+            @Override
+            public void disconnected(Object socketMetric, SocketAddress remoteAddress) {
+              numberOfOutboundConnections.decrementAndGet();
+            }
+          };
+        }
+        @Override
+        public TCPMetrics<?> createNetServerMetrics(NetServerOptions options, SocketAddress localAddress) {
+          return new TCPMetrics<>() {
+            @Override
+            public Object connected(SocketAddress remoteAddress, String remoteName) {
+              numberOfInboundConnections.incrementAndGet();
+              return null;
+            }
+            @Override
+            public void disconnected(Object socketMetric, SocketAddress remoteAddress) {
+              numberOfInboundConnections.decrementAndGet();
+            }
+          };
+        }
+      })
+      .buildClustered()
+      .await());
+    vertx.eventBus().request(ADDRESS1, "ping").await();
+    assertWaitUntil(() -> numberOfOutboundConnections.get() == 1 && numberOfInboundConnections.get() == 1);
+    ClusteredEventBus eventBus = (ClusteredEventBus) vertices[0].eventBus();
+    Future.future(eventBus::close).await();
+    assertWaitUntil(() -> numberOfOutboundConnections.get() == 0 && numberOfInboundConnections.get() == 0);
   }
 }

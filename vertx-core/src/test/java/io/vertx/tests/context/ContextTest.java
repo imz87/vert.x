@@ -918,9 +918,8 @@ public class ContextTest extends VertxTestBase {
   }
 
   @Test
-  public void testSticky() {
+  public void testStickiness() {
     Context ctx = vertx.getOrCreateContext();
-    assertSame(ctx, vertx.getOrCreateContext());
     assertSame(((ContextInternal)ctx).nettyEventLoop(), ((ContextInternal)vertx.getOrCreateContext()).nettyEventLoop());
   }
 
@@ -1204,5 +1203,28 @@ public class ContextTest extends VertxTestBase {
     fut.await(20, TimeUnit.SECONDS);
     assertTrue((System.currentTimeMillis() - now) < 2000);
     assertTrue(interrupted.get());
+  }
+
+  @Test
+  public void testNestedDuplicate() {
+    ContextInternal ctx = ((ContextInternal) vertx.getOrCreateContext()).duplicate();
+    ctx.putLocal("foo", "bar");
+    Object expected = new Object();
+    ctx.putLocal(contextLocal, AccessMode.CONCURRENT, expected);
+    ContextInternal duplicate = ctx.duplicate();
+    assertEquals("bar", duplicate.getLocal("foo"));
+    assertEquals(expected, duplicate.getLocal(contextLocal));
+    ctx.removeLocal("foo");
+    ctx.removeLocal(contextLocal, AccessMode.CONCURRENT);
+    assertEquals("bar", duplicate.getLocal("foo"));
+    assertEquals(expected, duplicate.getLocal(contextLocal));
+  }
+
+  @Test
+  public void testContextLocals() {
+    List<ContextLocal<?>> locals = ((VertxInternal) vertx).contextLocals();
+    assertSame(ContextInternal.LOCAL_MAP, locals.get(0));
+    assertSame(contextLocal, locals.get(1));
+    assertSame(locals, ((VertxInternal) vertx).contextLocals());
   }
 }

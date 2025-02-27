@@ -45,6 +45,8 @@ import io.vertx.core.net.*;
 import io.vertx.core.net.impl.*;
 import io.vertx.core.impl.transports.NioTransport;
 import io.vertx.core.spi.context.executor.EventExecutorProvider;
+import io.vertx.core.spi.context.storage.AccessMode;
+import io.vertx.core.spi.context.storage.ContextLocal;
 import io.vertx.core.spi.file.FileResolver;
 import io.vertx.core.file.impl.FileSystemImpl;
 import io.vertx.core.file.impl.WindowsFileSystem;
@@ -59,7 +61,7 @@ import io.vertx.core.spi.ExecutorServiceFactory;
 import io.vertx.core.spi.VerticleFactory;
 import io.vertx.core.spi.VertxThreadFactory;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.core.spi.cluster.impl.NodeSelector;
+import io.vertx.core.eventbus.impl.clustered.NodeSelector;
 import io.vertx.core.spi.tracing.VertxTracer;
 
 import java.io.File;
@@ -143,7 +145,8 @@ public class VertxImpl implements VertxInternal, MetricsProvider {
   private final FileResolver fileResolver;
   private final EventExecutorProvider eventExecutorProvider;
   private final Map<ServerID, NetServerInternal> sharedNetServers = new HashMap<>();
-  private final int contextLocals;
+  private final ContextLocal<?>[] contextLocals;
+  private final List<ContextLocal<?>> contextLocalsList;
   final WorkerPool workerPool;
   final WorkerPool internalWorkerPool;
   final WorkerPool virtualThreaWorkerPool;
@@ -170,7 +173,6 @@ public class VertxImpl implements VertxInternal, MetricsProvider {
   private final Throwable transportUnavailabilityCause;
   private final VertxTracer tracer;
   private final ThreadLocal<WeakReference<EventLoop>> stickyEventLoop = new ThreadLocal<>();
-  private final ThreadLocal<WeakReference<ContextInternal>> stickyContext = new ThreadLocal<>();
   private final boolean disableTCCL;
   private final Boolean useDaemonThread;
 
@@ -203,6 +205,7 @@ public class VertxImpl implements VertxInternal, MetricsProvider {
     ThreadFactory virtualThreadFactory = virtualThreadFactory();
 
     contextLocals = LocalSeq.get();
+    contextLocalsList = Collections.unmodifiableList(Arrays.asList(contextLocals));
     closeFuture = new CloseFuture(log);
     maxEventLoopExecTime = maxEventLoopExecuteTime;
     maxEventLoopExecTimeUnit = maxEventLoopExecuteTimeUnit;
@@ -247,7 +250,7 @@ public class VertxImpl implements VertxInternal, MetricsProvider {
   }
 
   Future<Vertx> initClustered(VertxOptions options) {
-    nodeSelector.init(this, clusterManager);
+    nodeSelector.init(clusterManager);
     clusterManager.registrationListener(nodeSelector);
     clusterManager.init(this);
     Promise<Void> initPromise = Promise.promise();
@@ -521,7 +524,6 @@ public class VertxImpl implements VertxInternal, MetricsProvider {
       } else {
         ctx = createEventLoopContext(eventLoop, workerPool, Thread.currentThread().getContextClassLoader());
       }
-      stickyContext.set(new WeakReference<>(ctx));
       return ctx;
     }
   }
@@ -565,10 +567,10 @@ public class VertxImpl implements VertxInternal, MetricsProvider {
   }
 
   private Object[] createContextLocals() {
-    if (contextLocals == 0) {
+    if (contextLocals.length == 0) {
       return EMPTY_CONTEXT_LOCALS;
     } else {
-      return new Object[contextLocals];
+      return new Object[contextLocals.length];
     }
   }
 
@@ -706,10 +708,6 @@ public class VertxImpl implements VertxInternal, MetricsProvider {
         return new ShadowContext(this, new EventLoopExecutor(eventLoop), context);
       }
     } else {
-      WeakReference<ContextInternal> ref = stickyContext.get();
-      if (ref != null) {
-        return ref.get();
-      }
       return null;
     }
   }
@@ -940,6 +938,11 @@ public class VertxImpl implements VertxInternal, MetricsProvider {
   @Override
   public AddressResolverGroup<InetSocketAddress> nettyAddressResolverGroup() {
     return hostnameResolver.nettyAddressResolverGroup();
+  }
+
+  @Override
+  public List<ContextLocal<?>> contextLocals() {
+    return contextLocalsList;
   }
 
   @Override
@@ -1321,6 +1324,17 @@ public class VertxImpl implements VertxInternal, MetricsProvider {
 
   public <C> C createSharedResource(String resourceKey, String resourceName, CloseFuture closeFuture, Function<CloseFuture, C> supplier) {
     return SharedResourceHolder.createSharedResource(this, resourceKey, resourceName, closeFuture, supplier);
+  }
+
+  void duplicate(ContextBase src, ContextBase dst) {
+    for (int i = 0;i < contextLocals.length;i++) {
+      ContextLocalImpl<?> contextLocal = (ContextLocalImpl<?>) contextLocals[i];
+      Object local = AccessMode.CONCURRENT.get(src.locals, i);
+      if (local != null) {
+        local = ((Function)contextLocal.duplicator).apply(local);
+      }
+      AccessMode.CONCURRENT.put(dst.locals, i, local);
+    }
   }
 
   /**
