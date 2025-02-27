@@ -127,11 +127,6 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
       }
 
       protected void afterDrain() {
-        context.emit(VertxHttp2Stream.this, VertxHttp2Stream::handleWriteQueueDrained);
-      }
-
-      @Override
-      protected void writeQueueDrained() {
         context.emit(VertxHttpStreamBase.this, VertxHttpStreamBase::handleWriteQueueDrained);
       }
     };
