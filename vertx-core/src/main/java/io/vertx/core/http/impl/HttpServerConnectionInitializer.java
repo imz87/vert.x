@@ -57,6 +57,7 @@ class HttpServerConnectionInitializer {
   private final Handler<Throwable> exceptionHandler;
   private final Object metric;
   private final CompressionOptions[] compressionOptions;
+  private final int compressionContentSizeThreshold;
   private final Function<String, String> encodingDetector;
 
   HttpServerConnectionInitializer(ContextInternal context,
@@ -92,7 +93,8 @@ class HttpServerConnectionInitializer {
     this.exceptionHandler = exceptionHandler;
     this.metric = metric;
     this.compressionOptions = compressionOptions;
-    this.encodingDetector = compressionOptions != null ? new EncodingDetector(compressionOptions)::determineEncoding : null;
+    this.compressionContentSizeThreshold = options.getCompressionContentSizeThreshold();
+    this.encodingDetector = compressionOptions != null ? new EncodingDetector(options.getCompressionContentSizeThreshold(), compressionOptions)::determineEncoding : null;
   }
 
   void configurePipeline(Channel ch, SslChannelProvider sslChannelProvider, SslContextManager sslContextManager) {
@@ -302,7 +304,7 @@ class HttpServerConnectionInitializer {
       pipeline.addBefore(name, "inflater", new HttpContentDecompressor(false));
     }
     if (options.isCompressionSupported()) {
-      pipeline.addBefore(name, "deflater", new HttpChunkContentCompressor(compressionOptions));
+      pipeline.addBefore(name, "deflater", new HttpChunkContentCompressor(compressionContentSizeThreshold, compressionOptions));
     }
   }
 
@@ -331,8 +333,8 @@ class HttpServerConnectionInitializer {
 
   private static class EncodingDetector extends HttpContentCompressor {
 
-    private EncodingDetector(CompressionOptions[] compressionOptions) {
-      super(compressionOptions);
+    private EncodingDetector(int contentSizeThreshold, CompressionOptions[] compressionOptions) {
+      super(contentSizeThreshold, compressionOptions);
     }
 
     @Override

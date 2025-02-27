@@ -25,10 +25,9 @@ import io.vertx.core.http.StreamPriorityBase;
 import io.vertx.core.http.impl.headers.VertxHttpHeaders;
 import io.vertx.core.http.impl.headers.VertxHttpHeaders;
 import io.vertx.core.internal.ContextInternal;
-import io.vertx.core.internal.PromiseInternal;
 import io.vertx.core.internal.VertxInternal;
-import io.vertx.core.internal.concurrent.InboundMessageQueue;
-import io.vertx.core.internal.concurrent.OutboundMessageQueue;
+import io.vertx.core.internal.concurrent.InboundMessageChannel;
+import io.vertx.core.internal.concurrent.OutboundMessageChannel;
 import io.vertx.core.net.impl.ConnectionBase;
 import io.vertx.core.net.impl.MessageWrite;
 
@@ -37,8 +36,8 @@ import io.vertx.core.net.impl.MessageWrite;
  */
 abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
 
-  private final OutboundMessageQueue<MessageWrite> outboundQueue;
-  private final InboundMessageQueue<Object> inboundQueue;
+  private final OutboundMessageChannel<MessageWrite> outboundQueue;
+  private final InboundMessageChannel<Object> inboundQueue;
   protected final C conn;
   protected final VertxInternal vertx;
   protected final ContextInternal context;
@@ -84,7 +83,7 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
     this.conn = conn;
     this.vertx = conn.vertx();
     this.context = context;
-    this.inboundQueue = new InboundMessageQueue<>(conn.context().eventLoop(), context.executor()) {
+    this.inboundQueue = new InboundMessageChannel<>(conn.context().eventLoop(), context.executor()) {
       @Override
       protected void handleMessage(Object item) {
         if (item instanceof MultiMap) {
@@ -106,7 +105,7 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
     this.priority = createDefaultStreamPriority();
     this.isConnect = false;
     this.writable = true;
-    this.outboundQueue = new OutboundMessageQueue<>(conn.context().nettyEventLoop()) {
+    this.outboundQueue = new OutboundMessageChannel<>(conn.context().nettyEventLoop()) {
       // TODO implement stop drain to optimize flushes ?
       @Override
       public boolean test(MessageWrite msg) {
@@ -127,8 +126,7 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
         messageWrite.cancel(cause);
       }
 
-      @Override
-      protected void writeQueueDrained() {
+      protected void afterDrain() {
         context.emit(VertxHttpStreamBase.this, VertxHttpStreamBase::handleWriteQueueDrained);
       }
     };
@@ -361,12 +359,12 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
       streamId = getStreamId();
     }
     if (streamId != -1) {
-      writeReset_(streamId, code, (PromiseInternal<Void>) promise);
+      writeReset_(streamId, code, null);
     } else {
       // Reset happening before stream allocation
       handleReset(code);
-      promise.complete();
     }
+    promise.complete();
   }
 
   void handleWriteQueueDrained() {

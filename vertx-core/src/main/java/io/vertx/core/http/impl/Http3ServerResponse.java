@@ -46,7 +46,6 @@ public class Http3ServerResponse implements HttpServerResponse, HttpResponse {
   private final ChannelHandlerContext ctx;
   private final Http3ServerConnection conn;
   private final boolean push;
-  private final String contentEncoding;
   private final Http3HeadersAdaptor headers = new Http3HeadersAdaptor();
   private Http3HeadersAdaptor headersMap;
   private Http3HeadersAdaptor trailers;
@@ -68,13 +67,11 @@ public class Http3ServerResponse implements HttpServerResponse, HttpResponse {
 
   public Http3ServerResponse(Http3ServerConnection conn,
                              Http3ServerStream stream,
-                             boolean push,
-                             String contentEncoding) {
+                             boolean push) {
     this.stream = stream;
     this.ctx = conn.handlerContext;
     this.conn = conn;
     this.push = push;
-    this.contentEncoding = contentEncoding;
   }
 
   boolean isPush() {
@@ -629,26 +626,6 @@ public class Http3ServerResponse implements HttpServerResponse, HttpResponse {
     }
     Promise<HttpServerResponse> promise = stream.context.promise();
     conn.sendPush(stream.id(), authority, method, headers, path, stream.priority(), promise);
-    return promise.future();
-  }
-
-  @Override
-  public Future<HttpServerResponse> push(HttpMethod method, String authority, String path, MultiMap headers) {
-    if (push) {
-      throw new IllegalStateException("A push response cannot promise another push");
-    }
-    HostAndPort hostAndPort = null;
-    if (authority != null) {
-      hostAndPort = HostAndPort.parseAuthority(authority, -1);
-    }
-    if (hostAndPort == null) {
-      hostAndPort = stream.authority;
-    }
-    synchronized (conn) {
-      checkValid();
-    }
-    Promise<HttpServerResponse> promise = stream.context.promise();
-    conn.sendPush(stream.id(), hostAndPort, method, headers, path, stream.priority(), promise);
     return promise.future();
   }
 

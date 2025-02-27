@@ -4456,6 +4456,7 @@ public abstract class HttpTest extends HttpTestBase {
       public HttpClientRequest redirectHandler(@Nullable Function<HttpClientResponse, Future<HttpClientRequest>> handler) { throw new UnsupportedOperationException(); }
       public HttpClientRequest earlyHintsHandler(@Nullable Handler<MultiMap> handler) { throw new UnsupportedOperationException(); }
       public Future<Void> sendHead() { throw new UnsupportedOperationException(); }
+      public Future<HttpClientResponse> send(ClientForm form) { throw new UnsupportedOperationException(); }
       public Future<HttpClientResponse> connect() { throw new UnsupportedOperationException(); }
       public Future<Void> end(String chunk) { throw new UnsupportedOperationException(); }
       public Future<Void> end(String chunk, String enc) { throw new UnsupportedOperationException(); }
@@ -5901,16 +5902,15 @@ public abstract class HttpTest extends HttpTestBase {
   public void testGetCookies() throws Exception {
     testCookies("foo=bar; wibble=blibble; plop=flop", req -> {
       assertEquals(3, req.cookieCount());
-      Map<String, Cookie> cookies = req.cookieMap();
-      assertTrue(cookies.containsKey("foo"));
-      assertTrue(cookies.containsKey("wibble"));
-      assertTrue(cookies.containsKey("plop"));
+      Set<Cookie> cookies = req.cookies();
+      assertNotNull(req.getCookie("foo"));
+      assertNotNull(req.getCookie("wibble"));
+      assertNotNull(req.getCookie("plop"));
       Cookie removed = req.response().removeCookie("foo");
-      cookies = req.cookieMap();
       // removed cookies, need to be sent back with an expiration date
-      assertTrue(cookies.containsKey("foo"));
-      assertTrue(cookies.containsKey("wibble"));
-      assertTrue(cookies.containsKey("plop"));
+      assertNotNull(req.getCookie("foo"));
+      assertNotNull(req.getCookie("wibble"));
+      assertNotNull(req.getCookie("plop"));
       req.response().end();
     }, resp -> {
       List<String> cookies = resp.headers().getAll("set-cookie");
@@ -6162,9 +6162,8 @@ public abstract class HttpTest extends HttpTestBase {
     testCookies("XSRF-TOKEN=c359b44aef83415", req -> {
       assertEquals(1, req.cookieCount());
       req.response().addCookie(Cookie.cookie("XSRF-TOKEN", "88533580000c314").setPath("/"));
-      Map<String, Cookie> deprecatedMap = req.cookieMap();
-      assertFalse(((ServerCookie) deprecatedMap.get("XSRF-TOKEN")).isFromUserAgent());
-      assertEquals("/", deprecatedMap.get("XSRF-TOKEN").getPath());
+      assertFalse(((ServerCookie) req.getCookie("XSRF-TOKEN")).isFromUserAgent());
+      assertEquals("/", req.getCookie("XSRF-TOKEN").getPath());
       req.response().end();
     }, resp -> {
       List<String> cookies = resp.headers().getAll("set-cookie");
