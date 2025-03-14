@@ -265,7 +265,7 @@ public class VirtualThreadContextTest extends VertxTestBase {
         Future<Void> fut = promise.future();
         fut.await();
         fail();
-      } catch (Throwable e) {
+      } catch (Exception e) {
         if (e instanceof InterruptedException) {
           interrupted.set(true);
         }
@@ -389,6 +389,32 @@ public class VirtualThreadContextTest extends VertxTestBase {
     ctx.runOnContext(v -> {
       testComplete();
     });
+    await();
+  }
+
+  @Test
+  public void testAwaitFromVirtualThreadExecuteBlocking() {
+    Assume.assumeTrue(isVirtualThreadAvailable());
+    Context ctx = vertx.createVirtualThreadContext();
+    ctx.executeBlocking(() -> {
+      vertx.timer(20).await();
+      return "done";
+    }).onComplete(onSuccess(res -> {
+      assertEquals("done", res);
+      testComplete();
+    }));
+    await();
+  }
+
+  @Test
+  public void testAwaitFromWorkerExecuteBlocking() {
+    Context ctx = vertx.getOrCreateContext();
+    ctx.executeBlocking(() -> {
+      vertx.timer(20).await();
+      return "done";
+    }).onComplete(onFailure(res -> {
+      testComplete();
+    }));
     await();
   }
 }

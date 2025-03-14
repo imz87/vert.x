@@ -23,7 +23,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpFrame;
 import io.vertx.core.http.StreamPriorityBase;
 import io.vertx.core.http.impl.headers.VertxHttpHeaders;
-import io.vertx.core.http.impl.headers.VertxHttpHeaders;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.internal.concurrent.InboundMessageChannel;
@@ -291,6 +290,12 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
       }
       return;
     }
+    if (failure != null) {
+      if (promise != null) {
+        promise.fail(failure);
+      }
+      return;
+    }
     if (end) {
       endWritten();
     }
@@ -317,6 +322,10 @@ abstract class VertxHttpStreamBase<C extends ConnectionBase, S> {
   void doWriteData(ByteBuf buf, boolean end, Promise<Void> promise) {
     if (reset != -1L) {
       promise.fail("Stream reset");
+      return;
+    }
+    if (failure != null) {
+      promise.fail(failure);
       return;
     }
     ByteBuf chunk;

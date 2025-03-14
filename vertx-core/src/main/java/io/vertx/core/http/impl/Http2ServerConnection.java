@@ -176,11 +176,11 @@ public class Http2ServerConnection extends Http2ConnectionBase implements HttpSe
 
   @Override
   protected synchronized void onHeadersRead(int streamId, Http2Headers headers, StreamPriorityBase streamPriority, boolean endOfStream) {
-    Http2ServerStream stream = (Http2ServerStream) stream(streamId);
-    if (stream == null) {
+    Http2Stream nettyStream = handler.connection().stream(streamId);
+    Http2ServerStream stream;
+    if (nettyStream.getProperty(streamKey) == null) {
       if (streamId == 1 && handler.upgraded) {
         stream = createStream(headers, true);
-        upgraded = stream;
       } else {
         stream = createStream(headers, endOfStream);
       }
@@ -192,6 +192,7 @@ public class Http2ServerConnection extends Http2ConnectionBase implements HttpSe
       stream.onHeaders(new Http2HeadersAdaptor(headers), streamPriority);
     } else {
       // Http server request trailer - not implemented yet (in api)
+      stream = nettyStream.getProperty(streamKey);
     }
     if (endOfStream) {
       stream.onEnd();

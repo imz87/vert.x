@@ -249,7 +249,7 @@ public class NetSocketImpl extends VertxConnection implements NetSocketInternal 
   @Override
   public Future<Void> sendFile(String filename, long offset, long length) {
     PromiseInternal<Void> promise = context.promise();
-    File file = vertx.resolveFile(filename);
+    File file = vertx.fileResolver().resolve(filename);
     RandomAccessFile raf;
     try {
       raf = new RandomAccessFile(file, "r");
