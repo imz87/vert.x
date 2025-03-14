@@ -602,9 +602,9 @@ public class NetServerImpl implements Closeable, MetricsProvider, NetServerInter
       return bootstrap;
     }
     ServerBootstrap bootstrap = new ServerBootstrap();
-    bootstrap.group(vertx.getAcceptorEventLoopGroup(), channelBalancer.workers());
-    bootstrap.childOption(ChannelOption.ALLOCATOR, VertxByteBufAllocator.POOLED_ALLOCATOR);
+    bootstrap.group(vertx.acceptorEventLoopGroup(), channelBalancer.workers());
     bootstrap.childHandler(channelBalancer);
+    bootstrap.childOption(ChannelOption.ALLOCATOR, VertxByteBufAllocator.POOLED_ALLOCATOR);
     applyConnectionOptions(localAddress.isDomainSocket(), bootstrap);
     return bootstrap;
   }
