@@ -12,7 +12,7 @@ package io.vertx.core.internal.tls;
 
 import io.netty.handler.ssl.SniHandler;
 import io.netty.handler.ssl.SslContext;
-import io.netty.incubator.codec.quic.QuicSslContext;
+import io.netty.handler.codec.quic.QuicSslContext;
 import io.netty.util.AsyncMapping;
 import io.netty.util.Mapping;
 import io.vertx.core.VertxException;

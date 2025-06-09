@@ -1,8 +1,7 @@
 package io.vertx.core.http.impl;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.incubator.codec.http3.Http3Headers;
-import io.netty.incubator.codec.quic.QuicStreamChannel;
+import io.netty.handler.codec.quic.QuicStreamChannel;
 import io.netty.util.concurrent.FutureListener;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;

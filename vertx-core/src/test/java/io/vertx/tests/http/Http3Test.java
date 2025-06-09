@@ -11,7 +11,7 @@
 
 package io.vertx.tests.http;
 
-import io.netty.incubator.codec.quic.QuicStreamPriority;
+import io.netty.handler.codec.quic.QuicStreamPriority;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.*;
 import io.vertx.core.net.NetClientOptions;

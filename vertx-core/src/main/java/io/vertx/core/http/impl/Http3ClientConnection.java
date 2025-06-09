@@ -12,8 +12,8 @@
 package io.vertx.core.http.impl;
 
 import io.netty.handler.timeout.IdleStateEvent;
-import io.netty.incubator.codec.http3.Http3Headers;
-import io.netty.incubator.codec.quic.QuicStreamChannel;
+import io.netty.handler.codec.http3.Http3Headers;
+import io.netty.handler.codec.quic.QuicStreamChannel;
 import io.vertx.core.Future;
 import io.vertx.core.*;
 import io.vertx.core.http.*;

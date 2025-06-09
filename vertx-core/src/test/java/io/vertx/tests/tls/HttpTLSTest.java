@@ -37,7 +37,7 @@ import java.util.function.Supplier;
 
 import javax.net.ssl.*;
 
-import io.netty.incubator.codec.quic.QuicSslEngine;
+import io.netty.handler.codec.quic.QuicSslEngine;
 import io.vertx.core.*;
 import io.vertx.core.http.*;
 import io.vertx.core.impl.VertxThread;
