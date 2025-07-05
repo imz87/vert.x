@@ -17,7 +17,7 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.impl.headers.HeadersAdaptor;
 import io.vertx.core.http.impl.headers.HeadersMultiMap;
-import io.vertx.core.http.impl.headers.Http2HeadersAdaptor;
+import io.vertx.core.http.impl.http2.Http2HeadersMultiMap;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -634,9 +634,10 @@ public abstract class HeadersTest {
     assertEquals("anotherValue",result.get("anotherKey"));
   }
 
+  //TODO: checkit: my header
   @Test
   public void testSetAllOnExistingMapUsingMultiMapHttp2() {
-    MultiMap mainMap = new Http2HeadersAdaptor();
+    MultiMap mainMap = new Http2HeadersMultiMap(new DefaultHttp2Headers());
     mainMap.add("originalKey", "originalValue");
 
     MultiMap setAllMap = newMultiMap();
@@ -652,9 +653,10 @@ public abstract class HeadersTest {
     assertEquals("anotherValue",result.get("anotherKey"));
   }
 
+  //TODO: checkit: new header
   @Test
   public void testSetAllOnExistingMapUsingHashMapHttp2() {
-    MultiMap mainMap = new Http2HeadersAdaptor();
+    MultiMap mainMap = new Http2HeadersMultiMap(new DefaultHttp2Headers());
     mainMap.add("originalKey", "originalValue");
 
     Map<String,String> setAllMap = new HashMap<>();
