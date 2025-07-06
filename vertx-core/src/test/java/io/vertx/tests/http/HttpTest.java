@@ -162,7 +162,7 @@ public abstract class HttpTest extends HttpTestBase {
       .connect(sockAddress)
       .onComplete(onSuccess(sock -> {
         sock.handler(buf -> {
-          assertTrue("Response is not an http 200", buf.toString("UTF-8").startsWith("HTTP/1.1 200 OK"));
+          assertTrue("Response is not an http 200!", buf.toString("UTF-8").startsWith("HTTP/1.1 200 OK"));
           testComplete();
         });
         sock.write("GET / HTTP/1.1\r\n\r\n");
