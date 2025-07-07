@@ -634,7 +634,6 @@ public abstract class HeadersTest {
     assertEquals("anotherValue",result.get("anotherKey"));
   }
 
-  //TODO: checkit: my header
   @Test
   public void testSetAllOnExistingMapUsingMultiMapHttp2() {
     MultiMap mainMap = new Http2HeadersMultiMap(new DefaultHttp2Headers());
@@ -653,7 +652,6 @@ public abstract class HeadersTest {
     assertEquals("anotherValue",result.get("anotherKey"));
   }
 
-  //TODO: checkit: new header
   @Test
   public void testSetAllOnExistingMapUsingHashMapHttp2() {
     MultiMap mainMap = new Http2HeadersMultiMap(new DefaultHttp2Headers());
