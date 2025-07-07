@@ -13,10 +13,12 @@ package io.vertx.core.http.impl.headers;
 import io.netty.incubator.codec.http3.DefaultHttp3Headers;
 import io.netty.incubator.codec.http3.Http3Headers;
 import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpMethod;
 
 /**
  * @author <a href="mailto:zolfaghari19@gmail.com">Iman Zolfaghari</a>
  */
+@Deprecated
 public class Http3HeadersAdaptor extends HttpHeadersAdaptor<Http3Headers> {
 
   public Http3HeadersAdaptor() {
@@ -41,13 +43,16 @@ public class Http3HeadersAdaptor extends HttpHeadersAdaptor<Http3Headers> {
   }
 
   @Override
-  public void method(CharSequence value) {
-    this.headers.method(value);
+  public Http3HeadersAdaptor method(HttpMethod method) {
+    this.headers.method(method.name());
+    return this;
   }
 
+/*
   @Override
   public void authority(CharSequence authority) {
     this.headers.authority(authority);
+
   }
 
   @Override
@@ -81,14 +86,11 @@ public class Http3HeadersAdaptor extends HttpHeadersAdaptor<Http3Headers> {
   }
 
   @Override
-  public void status(CharSequence status) {
-    this.headers.status(status);
-  }
-
-  @Override
   public CharSequence scheme() {
     return this.headers.scheme();
   }
+
+*/
 
   @Override
   public boolean contains(CharSequence name, CharSequence value) {

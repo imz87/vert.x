@@ -540,7 +540,7 @@ public class Http2ServerRequest extends HttpServerRequestInternal implements Htt
 
   @Override
   public void handlePriorityChange(StreamPriorityBase streamPriority) {
-    Handler<StreamPriority> handler;
+    Handler<StreamPriorityBase> handler;
     synchronized (connection) {
       handler = streamPriorityHandler;
     }

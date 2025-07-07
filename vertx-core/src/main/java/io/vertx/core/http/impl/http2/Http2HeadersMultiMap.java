@@ -8,30 +8,33 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package io.vertx.core.http.impl.headers;
+package io.vertx.core.http.impl.http2;
 
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.impl.headers.HttpHeadersAdaptor;
+import io.vertx.core.net.HostAndPort;
 
 /**
  * @author <a href="mailto:zolfaghari19@gmail.com">Iman Zolfaghari</a>
  */
-public class Http2HeadersAdaptor extends HttpHeadersAdaptor<Http2Headers> {
+public class Http2HeadersMultiMap extends HttpHeadersAdaptor<Http2Headers> {
 
-  public Http2HeadersAdaptor() {
+  public Http2HeadersMultiMap() {
     this(new DefaultHttp2Headers());
   }
 
-  public Http2HeadersAdaptor(Http2HeadersAdaptor http2HeadersAdaptor) {
+  public Http2HeadersMultiMap(Http2HeadersMultiMap http2HeadersAdaptor) {
     this(http2HeadersAdaptor.headers);
   }
 
-  public Http2HeadersAdaptor(Http2Headers headers) {
+  public Http2HeadersMultiMap(Http2Headers headers) {
     super(headers);
   }
 
-  public Http2HeadersAdaptor(boolean mutable, Http2Headers headers) {
+  public Http2HeadersMultiMap(boolean mutable, Http2Headers headers) {
     super(mutable, headers);
   }
 
@@ -41,53 +44,36 @@ public class Http2HeadersAdaptor extends HttpHeadersAdaptor<Http2Headers> {
   }
 
   @Override
-  public void method(CharSequence value) {
-    this.headers.method(value);
+  public Http2HeadersMultiMap status(CharSequence status) {
+    super.status(status);
+    return this;
   }
 
   @Override
-  public void authority(CharSequence authority) {
-    this.headers.authority(authority);
+  public Http2HeadersMultiMap status(Integer status) {
+    super.status(status);
+    return this;
   }
 
   @Override
-  public CharSequence authority() {
-    return this.headers.authority();
+  public Http2HeadersMultiMap path(String path) {
+    super.path(path);
+    return this;
   }
 
-  @Override
-  public void path(CharSequence value) {
-    this.headers.path(value);
+  public Http2HeadersMultiMap method(HttpMethod method) {
+    super.method(method);
+    return this;
   }
 
-  @Override
-  public void scheme(CharSequence value) {
-    this.headers.scheme(value);
+  public Http2HeadersMultiMap authority(HostAndPort authority) {
+    super.authority(authority);
+    return this;
   }
 
-  @Override
-  public CharSequence path() {
-    return this.headers.path();
-  }
-
-  @Override
-  public CharSequence method() {
-    return this.headers.method();
-  }
-
-  @Override
-  public CharSequence status() {
-    return this.headers.status();
-  }
-
-  @Override
-  public void status(CharSequence status) {
-    this.headers.status(status);
-  }
-
-  @Override
-  public CharSequence scheme() {
-    return this.headers.scheme();
+  public Http2HeadersMultiMap scheme(String scheme) {
+    super.scheme(scheme);
+    return this;
   }
 
   @Override
@@ -105,6 +91,6 @@ public class Http2HeadersAdaptor extends HttpHeadersAdaptor<Http2Headers> {
     if (!isMutable() && ! mutable) {
       return this;
     }
-    return new Http2HeadersAdaptor(mutable, new DefaultHttp2Headers().setAll(headers));
+    return new Http2HeadersMultiMap(mutable, new DefaultHttp2Headers().setAll(headers));
   }
 }

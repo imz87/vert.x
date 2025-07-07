@@ -57,10 +57,8 @@ public class Http2ServerResponse implements HttpServerResponse, HttpResponse {
   private final Http2ServerConnection conn;
   private final ContextInternal context;
   private final boolean push;
-  private final Http2HeadersAdaptor headers = new Http2HeadersAdaptor();
-  private Http2HeadersAdaptor headersMap;
-  private Http2HeadersAdaptor trailers;
-  private Http2HeadersAdaptor trailedMap;
+  private Http2HeadersMultiMap headersMap;
+  private Http2HeadersMultiMap trailedMap;
   private boolean chunked;
   private boolean headWritten;
   private boolean ended;
@@ -241,7 +239,6 @@ public class Http2ServerResponse implements HttpServerResponse, HttpResponse {
     }
   }
 
-  //TODO: checkit
   @Override
   public MultiMap trailers() {
     Http2HeadersMultiMap ret = trailedMap;
@@ -813,7 +810,7 @@ public class Http2ServerResponse implements HttpServerResponse, HttpResponse {
     }
 
     @Override
-    public void handlePriorityChange(StreamPriority streamPriority) {
+    public void handlePriorityChange(StreamPriorityBase streamPriority) {
       throw new UnsupportedOperationException();
     }
 
