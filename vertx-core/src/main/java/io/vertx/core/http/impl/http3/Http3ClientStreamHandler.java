@@ -10,14 +10,12 @@
  */
 package io.vertx.core.http.impl.http3;
 
-import io.netty.incubator.codec.quic.QuicStreamChannel;
-import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
 
-/**
- * @author <a href="mailto:zolfaghari19@gmail.com">Iman Zolfaghari</a>
- */
-public interface Http3ClientConnection extends Http3Connection {
+public interface Http3ClientStreamHandler extends Http3StreamHandler {
 
-  void createStream(Http3ClientStream http3ClientStream, Handler<QuicStreamChannel> onComplete) throws Exception;
+  void handleContinue();
+  void handlePush(Http3ClientPush push);
+  void handleEarlyHints(MultiMap headers);
 
 }

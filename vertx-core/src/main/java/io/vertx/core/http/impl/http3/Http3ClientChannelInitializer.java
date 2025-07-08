@@ -10,14 +10,16 @@
  */
 package io.vertx.core.http.impl.http3;
 
-import io.netty.incubator.codec.quic.QuicStreamChannel;
-import io.vertx.core.Handler;
+import io.netty.channel.Channel;
+import io.vertx.core.http.impl.HttpClientConnection;
+import io.vertx.core.internal.ContextInternal;
+import io.vertx.core.internal.PromiseInternal;
 
 /**
  * @author <a href="mailto:zolfaghari19@gmail.com">Iman Zolfaghari</a>
  */
-public interface Http3ClientConnection extends Http3Connection {
+public interface Http3ClientChannelInitializer {
 
-  void createStream(Http3ClientStream http3ClientStream, Handler<QuicStreamChannel> onComplete) throws Exception;
+  void http3Connected(ContextInternal context, Object metric, Channel ch, PromiseInternal<HttpClientConnection> promise);
 
 }

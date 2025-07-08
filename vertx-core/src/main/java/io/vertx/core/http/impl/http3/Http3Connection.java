@@ -12,6 +12,7 @@ package io.vertx.core.http.impl.http3;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.stream.ChunkedInput;
+import io.netty.incubator.codec.quic.QuicStreamChannel;
 import io.vertx.core.Promise;
 import io.vertx.core.http.StreamPriorityBase;
 import io.vertx.core.internal.ContextInternal;
@@ -35,20 +36,20 @@ public interface Http3Connection {
 
   void flushBytesRead();
 
-  void writeFrame(int streamId, int type, int flags, ByteBuf payload, Promise<Void> promise);
+  void writeFrame(QuicStreamChannel streamChannel, int type, int flags, ByteBuf payload, Promise<Void> promise);
 
-  void writeHeaders(int streamId, Http3HeadersMultiMap headers, StreamPriorityBase priority, boolean end, boolean checkFlush, Promise<Void> promise);
+  void writeHeaders(QuicStreamChannel streamChannel, Http3HeadersMultiMap headers, StreamPriorityBase priority, boolean end, boolean checkFlush, Promise<Void> promise);
 
-  void writeData(int streamId, ByteBuf buf, boolean end, Promise<Void> promise);
+  void writeData(QuicStreamChannel streamChannel, ByteBuf buf, boolean end, Promise<Void> promise);
 
-  void writeReset(int streamId, long code, Promise<Void> promise);
+  void writeReset(QuicStreamChannel streamChannel, long code, Promise<Void> promise);
 
-  void writePriorityFrame(int streamId, StreamPriorityBase priority);
+  void writePriorityFrame(QuicStreamChannel streamChannel, StreamPriorityBase priority);
 
-  void consumeCredits(int streamId, int amountOfBytes);
+  void consumeCredits(QuicStreamChannel streamChannel, int amountOfBytes);
 
   boolean supportsSendFile();
 
-  void sendFile(int streamId, ChunkedInput<ByteBuf> file, Promise<Void> promise);
+  void sendFile(QuicStreamChannel streamChannel, ChunkedInput<ByteBuf> file, Promise<Void> promise);
 
 }
