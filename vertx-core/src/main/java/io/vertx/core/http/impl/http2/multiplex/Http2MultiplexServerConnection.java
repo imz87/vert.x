@@ -123,7 +123,7 @@ public class Http2MultiplexServerConnection extends Http2MultiplexConnection<Htt
   }
 
   @Override
-  public void sendPush(int streamId, HostAndPort authority, HttpMethod method, MultiMap headers, String path, StreamPriority streamPriority, Promise<Http2ServerStream> promise) {
+  public void sendPush(int streamId, HostAndPort authority, HttpMethod method, MultiMap headers, String path, StreamPriorityBase streamPriority, Promise<Http2ServerStream> promise) {
     promise.fail("Push not supported");
   }
 }
