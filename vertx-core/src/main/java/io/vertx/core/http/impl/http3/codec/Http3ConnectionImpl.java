@@ -31,7 +31,6 @@ import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.*;
 import io.vertx.core.http.impl.HttpUtils;
-import io.vertx.core.http.impl.http2.Http2StreamBase;
 import io.vertx.core.http.impl.http3.Http3HeadersMultiMap;
 import io.vertx.core.http.impl.http3.Http3StreamBase;
 import io.vertx.core.impl.buffer.VertxByteBufAllocator;
@@ -496,5 +495,11 @@ abstract class Http3ConnectionImpl extends ConnectionBase implements HttpConnect
   @Override
   public void writeReset(QuicStreamChannel streamChannel, long code, Promise<Void> promise) {
     handler.writeReset(streamChannel, code, null);
+  }
+
+  protected void init_(Http3StreamBase vertxStream, QuicStreamChannel streamChannel) {
+    VertxHttp3ConnectionHandler.setVertxStreamOnStreamChannel(streamChannel, vertxStream);
+    VertxHttp3ConnectionHandler.setLastStreamIdOnConnection(streamChannel.parent(), streamChannel.streamId());
+    this.quicStreamChannels.put(streamChannel.streamId(), streamChannel);
   }
 }

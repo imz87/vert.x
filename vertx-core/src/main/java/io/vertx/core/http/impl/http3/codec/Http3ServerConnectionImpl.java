@@ -67,13 +67,11 @@ public class Http3ServerConnectionImpl extends Http3ConnectionImpl implements Ht
     this.handler = connHandler;
   }
 
-/*
   @Override
   public Http3ServerConnection streamHandler(Handler<Http3ServerStream> handler) {
     this.streamHandler = handler;
     return this;
   }
-*/
 
   public HttpServerMetrics metrics() {
     return metrics;
@@ -101,7 +99,7 @@ public class Http3ServerConnectionImpl extends Http3ConnectionImpl implements Ht
 
   private Http3ServerStream createStream(Http3Headers headers, boolean streamEnded) {
     return new Http3ServerStream(
-      null,
+      this,
       metrics,
       metric(),
       streamContextSupplier.get(),
@@ -111,7 +109,7 @@ public class Http3ServerConnectionImpl extends Http3ConnectionImpl implements Ht
 
   private void initStream(QuicStreamChannel streamChannel, Http3ServerStream vertxStream) {
     vertxStream.init(streamChannel, streamChannel.isWritable());
-//    stream.setProperty(streamKey, vertxStream);
+    init_(vertxStream, streamChannel);
   }
 
 /*
@@ -328,29 +326,8 @@ public class Http3ServerConnectionImpl extends Http3ConnectionImpl implements Ht
     }
   }*/
 
-
-  @Override
-  public Http3ServerConnection streamHandler(Handler<Http3ServerStream> handler) {
-    return null;
-  }
-
   @Override
   public void sendPush(int streamId, HostAndPort authority, HttpMethod method, MultiMap headers, String path, StreamPriorityBase streamPriority, Promise<Http3ServerStream> promise) {
-
-  }
-
-  @Override
-  public void consumeCredits(QuicStreamChannel streamChannel, int amountOfBytes) {
-
-  }
-  //
-//  @Override
-//  protected void onHeadersRead(int streamId, Http3Headers headers, StreamPriorityBase streamPriority, boolean endOfStream) {
-//
-//  }
-
-  @Override
-  public void writeHeaders(QuicStreamChannel streamChannel, Http3HeadersMultiMap headers, StreamPriorityBase priority, boolean end, boolean checkFlush, Promise<Void> promise) {
 
   }
 }

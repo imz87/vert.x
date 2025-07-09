@@ -308,9 +308,7 @@ public class Http3ClientConnectionImpl extends Http3ConnectionImpl implements Ht
   public void createStream(Http3ClientStream vertxStream, Handler<QuicStreamChannel> onComplete) throws Exception {
     Future<QuicStreamChannel> streamChannel1 = handler.createStreamChannel();
     streamChannel1.onSuccess(streamChannel -> {
-      VertxHttp3ConnectionHandler.setVertxStreamOnStreamChannel(streamChannel, vertxStream);
-      VertxHttp3ConnectionHandler.setLastStreamIdOnConnection(streamChannel.parent(), streamChannel.streamId());
-      this.quicStreamChannels.put(streamChannel.streamId(), streamChannel);
+      init_(vertxStream, streamChannel);
       vertxStream.init(streamChannel);
       onComplete.handle(streamChannel);
     }).onFailure(this::handleException);
