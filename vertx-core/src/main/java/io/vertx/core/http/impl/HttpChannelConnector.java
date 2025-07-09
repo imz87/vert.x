@@ -44,8 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static io.vertx.core.http.HttpMethod.*;
-import static io.vertx.core.net.impl.ChannelProvider.*;
+import static io.vertx.core.http.HttpMethod.OPTIONS;
+import static io.vertx.core.net.impl.ChannelProvider.CLIENT_SSL_HANDLER_NAME;
 
 /**
  * Performs the channel configuration and connection according to the client options and the protocol version.
