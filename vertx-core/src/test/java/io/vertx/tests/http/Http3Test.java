@@ -442,4 +442,22 @@ public class Http3Test extends HttpCommonTest {
     //TODO: resolve this test issue.
     super.testClientKeepAliveTimeoutNoStreams();
   }
+
+  @Override
+  public void testClearTextDirect() throws Exception {
+    //TODO: resolve this test issue. This test had no problem on old http3 structure.
+    super.testClearTextDirect();
+  }
+
+  @Override
+  public void testClientShutdown() throws Exception {
+    //TODO: resolve this test issue. This test had no problem on old http3 structure.
+    super.testClientShutdown();
+  }
+
+  @Override
+  public void testServerShutdown() throws Exception {
+    //TODO: resolve this test issue. This test had no problem on old http3 structure.
+    super.testServerShutdown();
+  }
 }
