@@ -6762,7 +6762,7 @@ public abstract class HttpTest extends HttpTestBase {
         resp.writeHead().onComplete(onSuccess(v -> {
           complete();
         }));
-        assertEquals(HttpVersion.HTTP_2, req.version());
+        assertEquals(serverAlpnProtocolVersion(), req.version());
       } catch (IllegalStateException ignore) {
         resp
           .setChunked(true)

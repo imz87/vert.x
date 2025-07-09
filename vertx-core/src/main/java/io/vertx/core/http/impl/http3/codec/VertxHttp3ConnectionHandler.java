@@ -20,11 +20,34 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.socket.ChannelInputShutdownEvent;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.traffic.GlobalTrafficShapingHandler;
-import io.netty.incubator.codec.http3.*;
-import io.netty.incubator.codec.quic.*;
+import io.netty.incubator.codec.http3.DefaultHttp3DataFrame;
+import io.netty.incubator.codec.http3.DefaultHttp3GoAwayFrame;
+import io.netty.incubator.codec.http3.DefaultHttp3HeadersFrame;
+import io.netty.incubator.codec.http3.DefaultHttp3UnknownFrame;
+import io.netty.incubator.codec.http3.Http3;
+import io.netty.incubator.codec.http3.Http3ConnectionHandler;
+import io.netty.incubator.codec.http3.Http3DataFrame;
+import io.netty.incubator.codec.http3.Http3ErrorCode;
+import io.netty.incubator.codec.http3.Http3Exception;
+import io.netty.incubator.codec.http3.Http3GoAwayFrame;
+import io.netty.incubator.codec.http3.Http3Headers;
+import io.netty.incubator.codec.http3.Http3HeadersFrame;
+import io.netty.incubator.codec.http3.Http3RequestStreamInboundHandler;
+import io.netty.incubator.codec.http3.Http3SettingsFrame;
+import io.netty.incubator.codec.http3.Http3UnknownFrame;
+import io.netty.incubator.codec.quic.QuicChannel;
+import io.netty.incubator.codec.quic.QuicConnectionCloseEvent;
+import io.netty.incubator.codec.quic.QuicError;
+import io.netty.incubator.codec.quic.QuicException;
+import io.netty.incubator.codec.quic.QuicStreamChannel;
+import io.netty.incubator.codec.quic.QuicStreamPriority;
 import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
-import io.netty.util.concurrent.*;
+import io.netty.util.concurrent.DefaultPromise;
+import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.FutureListener;
+import io.netty.util.concurrent.Promise;
 import io.vertx.core.Handler;
 import io.vertx.core.http.GoAway;
 import io.vertx.core.http.StreamPriorityBase;
@@ -433,7 +456,7 @@ public class VertxHttp3ConnectionHandler<C extends Http3ConnectionImpl> extends 
 
       if (evt == ChannelInputShutdownEvent.INSTANCE) {
         Http3StreamBase vertxStream = getVertxStreamFromStreamChannel(ctx);
-        if (vertxStream != null && vertxStream.getReset() > 0) {
+        if (vertxStream != null && vertxStream.getReset() > -1) {
           connection.onStreamClosed(vertxStream);
           return;
         }

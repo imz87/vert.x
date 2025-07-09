@@ -203,7 +203,11 @@ abstract class Http3ConnectionImpl extends ConnectionBase implements HttpConnect
   //  @Override
   public void onHeadersRead(ChannelHandlerContext ctx, Http3StreamBase stream,
                             Http3Headers headers, boolean endOfStream, QuicStreamChannel streamChannel) throws Http2Exception {
-    onHeadersRead(stream, streamChannel, headers, null, endOfStream);
+    if (stream != null && stream.isHeadersReceived()) {
+      stream.onTrailers(new Http3HeadersMultiMap(headers));
+    } else {
+      onHeadersRead(stream, streamChannel, headers, null, endOfStream);
+    }
   }
 
   //  @Override

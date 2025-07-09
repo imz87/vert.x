@@ -363,6 +363,6 @@ public class Http3ClientStreamImpl implements HttpClientStream, Http3ClientStrea
 
   @Override
   public HttpClientStream pushHandler(Handler<Http2ClientPush> handler) {
-    throw new RuntimeException("Not Implemented!");
+    return this;
   }
 }
