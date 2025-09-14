@@ -143,7 +143,7 @@ public class IoUringTransport implements Transport {
   }
 
   @Override
-  public void configure(TcpOptions options, boolean domainSocket, Bootstrap bootstrap) {
+  public void configure(TcpOptions options, boolean domainSocket, Bootstrap bootstrap, boolean supportsQuic) {
     if (domainSocket) {
       throw new IllegalArgumentException();
     }
@@ -152,6 +152,6 @@ public class IoUringTransport implements Transport {
     }
     bootstrap.option(IoUringChannelOption.TCP_QUICKACK, options.isTcpQuickAck());
     bootstrap.option(IoUringChannelOption.TCP_CORK, options.isTcpCork());
-    Transport.super.configure(options, false, bootstrap);
+    Transport.super.configure(options, false, bootstrap, supportsQuic);
   }
 }

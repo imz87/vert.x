@@ -148,8 +148,8 @@ public class NetSocketImpl extends SocketBase<NetSocketImpl> implements NetSocke
             chctx.pipeline().addFirst("handshaker", new SslHandshakeCompletionHandler(channelPromise));
             ChannelHandler sslHandler;
             if (sslOptions instanceof ClientSSLOptions) {
-              ClientSSLOptions clientSSLOptions = (ClientSSLOptions) sslOptions;
-              sslHandler = provider.createClientSslHandler(remoteAddress, serverName, sslOptions.isUseAlpn(), clientSSLOptions.getSslHandshakeTimeout(), clientSSLOptions.getSslHandshakeTimeoutUnit());
+              sslHandler = provider.createClientSslHandler(remoteAddress, serverName, sslOptions.isUseAlpn(),
+                sslOptions.getSslHandshakeTimeout(), sslOptions.getSslHandshakeTimeoutUnit());
             } else {
               sslHandler = provider.createServerHandler(sslOptions.isUseAlpn(), sslOptions.getSslHandshakeTimeout(),
                 sslOptions.getSslHandshakeTimeoutUnit(), HttpUtils.socketAddressToHostAndPort(chctx.channel().remoteAddress()));
@@ -181,4 +181,3 @@ public class NetSocketImpl extends SocketBase<NetSocketImpl> implements NetSocke
     super.handleClosed();
   }
 }
-

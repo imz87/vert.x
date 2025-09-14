@@ -16,7 +16,9 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.InternetProtocolFamily;
+import io.netty.handler.codec.quic.QuicChannel;
 import io.vertx.core.datagram.DatagramSocketOptions;
+import io.vertx.core.http.HttpVersion;
 import io.vertx.core.impl.transports.NioTransport;
 import io.vertx.core.net.TcpOptions;
 import io.vertx.core.net.impl.SocketAddressImpl;
@@ -142,7 +144,7 @@ public interface Transport {
     }
   }
 
-  default void configure(TcpOptions options, boolean domainSocket, Bootstrap bootstrap) {
+  default void configure(TcpOptions options, boolean domainSocket, Bootstrap bootstrap, boolean supportsQuic) {
     if (!domainSocket) {
       bootstrap.option(ChannelOption.TCP_NODELAY, options.isTcpNoDelay());
       bootstrap.option(ChannelOption.SO_KEEPALIVE, options.isTcpKeepAlive());
@@ -161,4 +163,29 @@ public interface Transport {
       bootstrap.childOption(ChannelOption.SO_LINGER, options.getSoLinger());
     }
   }
+/*
+
+  default void configure(NetServerOptions options, Bootstrap serverBootstrap) {
+    if (options.getAcceptBacklog() != -1) {
+      serverBootstrap.option(ChannelOption.SO_BACKLOG, options.getAcceptBacklog());
+    }
+  }
+
+  default void configure(ClientOptionsBase options, int connectTimeout, QuicChannel channel) {
+    if (options.getSendBufferSize() != -1) {
+      channel.config().setOption(ChannelOption.SO_SNDBUF, options.getSendBufferSize());
+    }
+    if (options.getReceiveBufferSize() != -1) {
+      channel.config().setOption(ChannelOption.SO_RCVBUF, options.getReceiveBufferSize());
+      channel.config().setOption(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(options.getReceiveBufferSize()));
+    }
+    if (options.getSoLinger() != -1) {
+      channel.config().setOption(ChannelOption.SO_LINGER, options.getSoLinger());
+    }
+    if (options.getTrafficClass() != -1) {
+      channel.config().setOption(ChannelOption.IP_TOS, options.getTrafficClass());
+    }
+    channel.config().setOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout);
+  }
+*/
 }
