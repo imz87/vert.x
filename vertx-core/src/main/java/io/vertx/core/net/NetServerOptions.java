@@ -18,6 +18,7 @@ import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.quic.QuicOptions;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -103,7 +104,7 @@ public class NetServerOptions extends TCPSSLOptions {
       DEFAULT_PROXY_PROTOCOL_TIMEOUT_TIME_UNIT;
     this.registerWriteHandler = other.registerWriteHandler;
     this.trafficShapingOptions = other.getTrafficShapingOptions();
-    this.quicOptions = other.getQuicOptions() != null ? other.getQuicOptions().copy() : null;
+    this.quicOptions = other.getQuicOptions() != null ? new QuicOptions(other.getQuicOptions()) : null;
   }
 
   /**

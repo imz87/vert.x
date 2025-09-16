@@ -42,7 +42,7 @@ import io.vertx.core.internal.proxy.HttpProxyHandler;
 import io.vertx.core.net.ClientSSLOptions;
 import io.vertx.core.net.ProxyOptions;
 import io.vertx.core.net.ProxyType;
-import io.vertx.core.net.QuicOptions;
+import io.vertx.core.quic.QuicOptions;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;

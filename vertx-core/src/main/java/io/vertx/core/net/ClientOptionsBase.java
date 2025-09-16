@@ -18,6 +18,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.core.json.JsonObject;
 import io.netty.handler.logging.ByteBufFormat;
+import io.vertx.core.quic.QuicOptions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +72,7 @@ public abstract class ClientOptionsBase extends TCPSSLOptions {
     this.proxyOptions = other.proxyOptions != null ? new ProxyOptions(other.proxyOptions) : null;
     this.localAddress = other.localAddress;
     this.nonProxyHosts = other.nonProxyHosts != null ? new ArrayList<>(other.nonProxyHosts) : null;
-    this.quicOptions = other.getQuicOptions() != null ? other.getQuicOptions().copy() : null;
+    this.quicOptions = other.getQuicOptions() != null ? new QuicOptions(other.getQuicOptions()) : null;
   }
 
   /**

@@ -12,11 +12,14 @@ package io.vertx.core.quic;
 
 import io.vertx.core.net.TransportOptions;
 
+import java.time.Duration;
+
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 public class QuicOptions extends TransportOptions {
 
+  public static final Duration MAX_SSL_HANDSHAKE_TIMEOUT = Duration.ofDays(1);
   private Long initialMaxData;
   private Long initialMaxStreamDataBidirectionalLocal;
   private Long initialMaxStreamDataBidirectionalRemote;

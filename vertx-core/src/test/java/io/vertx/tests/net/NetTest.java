@@ -77,7 +77,7 @@ import java.util.function.Function;
 import java.util.function.LongPredicate;
 import java.util.function.Supplier;
 
-import static io.vertx.core.net.QuicOptions.MAX_SSL_HANDSHAKE_TIMEOUT;
+import static io.vertx.core.quic.QuicOptions.MAX_SSL_HANDSHAKE_TIMEOUT;
 import static io.vertx.test.core.TestUtils.assertIllegalArgumentException;
 import static io.vertx.test.core.TestUtils.assertNullPointerException;
 import static io.vertx.test.core.TestUtils.cnOf;

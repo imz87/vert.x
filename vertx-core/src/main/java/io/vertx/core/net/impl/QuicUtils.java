@@ -29,15 +29,13 @@ import io.netty.handler.codec.quic.QuicSslEngine;
 import io.netty.resolver.DefaultAddressResolverGroup;
 import io.netty.util.concurrent.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.net.QuicOptions;
+import io.vertx.core.quic.QuicOptions;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-
-import static io.vertx.core.net.QuicOptions.MAX_SSL_HANDSHAKE_TIMEOUT;
 
 /**
  * @author <a href="mailto:zolfaghari19@gmail.com">Iman Zolfaghari</a>
@@ -85,7 +83,7 @@ public class QuicUtils {
       .trustManager(InsecureTrustManagerFactory.INSTANCE)
       .applicationProtocols(Http3.supportedApplicationProtocols()).build();
 
-    quicOptions.setHttp3InitialMaxData(10000000);
+    quicOptions.setInitialMaxData(10000000L);
 
     return configureQuicCodecBuilder(Http3.newQuicClientCodecBuilder().sslContext(context), quicOptions, sslHandshakeTimeout, sslHandshakeTimeoutUnit).build();
   }
@@ -126,9 +124,9 @@ public class QuicUtils {
   }
 
   public static <T extends QuicCodecBuilder<T>> T configureQuicCodecBuilder(T quicCodecBuilder, QuicOptions quicOptions, long sslHandshakeTimeout, TimeUnit sslHandshakeTimeoutUnit) {
-    if (Duration.of(sslHandshakeTimeout, sslHandshakeTimeoutUnit.toChronoUnit()).compareTo(MAX_SSL_HANDSHAKE_TIMEOUT) > 0) {
+    if (Duration.of(sslHandshakeTimeout, sslHandshakeTimeoutUnit.toChronoUnit()).compareTo(QuicOptions.MAX_SSL_HANDSHAKE_TIMEOUT) > 0) {
       // Very large values can trigger crashes in lower-level Rust code
-      throw new IllegalArgumentException("sslHandshakeTimeout must be ≤ " + MAX_SSL_HANDSHAKE_TIMEOUT);
+      throw new IllegalArgumentException("sslHandshakeTimeout must be ≤ " + QuicOptions.MAX_SSL_HANDSHAKE_TIMEOUT);
     }
 
     quicCodecBuilder
@@ -137,12 +135,12 @@ public class QuicUtils {
       .datagram(2000000, 2000000)
 
       .maxIdleTimeout(sslHandshakeTimeout, sslHandshakeTimeoutUnit)
-      .initialMaxData(quicOptions.getHttp3InitialMaxData())
-      .initialMaxStreamsBidirectional(quicOptions.getHttp3InitialMaxStreamsBidirectional())
-      .initialMaxStreamDataBidirectionalLocal(quicOptions.getHttp3InitialMaxStreamDataBidirectionalLocal())
-      .initialMaxStreamDataBidirectionalRemote(quicOptions.getHttp3InitialMaxStreamDataBidirectionalRemote())
-      .initialMaxStreamsUnidirectional(quicOptions.getHttp3InitialMaxStreamsUnidirectional())
-      .initialMaxStreamDataUnidirectional(quicOptions.getHttp3InitialMaxStreamDataUnidirectional())
+      .initialMaxData(quicOptions.getInitialMaxData())
+      .initialMaxStreamsBidirectional(quicOptions.getInitialMaxStreamsBidirectional())
+      .initialMaxStreamDataBidirectionalLocal(quicOptions.getInitialMaxStreamDataBidirectionalLocal())
+      .initialMaxStreamDataBidirectionalRemote(quicOptions.getInitialMaxStreamDataBidirectionalRemote())
+      .initialMaxStreamsUnidirectional(quicOptions.getInitialMaxStreamsUnidirectional())
+      .initialMaxStreamDataUnidirectional(quicOptions.getInitialMaxStreamDataUnidirectional())
     ;
     return quicCodecBuilder;
   }
