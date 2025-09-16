@@ -10,19 +10,12 @@
  */
 package io.vertx.core.internal.tls;
 
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.handler.ssl.SniHandler;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.codec.quic.QuicSslContext;
-import io.netty.handler.codec.quic.QuicSslContextBuilder;
-import io.netty.handler.codec.quic.QuicSslEngine;
 import io.netty.util.AsyncMapping;
 import io.netty.util.Mapping;
 import io.vertx.core.VertxException;
 import io.vertx.core.http.ClientAuth;
-import io.vertx.core.http.impl.HttpUtils;
-import io.vertx.core.net.impl.QuicUtils;
 import io.vertx.core.spi.tls.SslContextFactory;
 
 import javax.net.ssl.*;
@@ -60,8 +53,6 @@ public class SslContextProvider {
   private final TrustManagerFactory trustManagerFactory;
   private final Function<String, KeyManagerFactory> keyManagerFactoryMapper;
   private final Function<String, TrustManager[]> trustManagerMapper;
-  private final QuicUtils.ServerQuicCodecBuilderInitializer serverQuicCodecBuilderInitializer;
-  private final QuicUtils.ClientQuicCodecBuilderInitializer clientQuicCodecBuilderInitializer;
 
   private final SslContext[] sslContexts = new SslContext[2];
   private final Map<String, SslContext>[] sslContextMaps = new Map[]{
@@ -72,8 +63,6 @@ public class SslContextProvider {
                             ClientAuth clientAuth,
                             String endpointIdentificationAlgorithm,
                             List<String> applicationProtocols,
-                            QuicUtils.ServerQuicCodecBuilderInitializer serverQuicCodecBuilderInitializer,
-                            QuicUtils.ClientQuicCodecBuilderInitializer clientQuicCodecBuilderInitializer,
                             Set<String> enabledCipherSuites,
                             Set<String> enabledProtocols,
                             KeyManagerFactory keyManagerFactory,
@@ -93,18 +82,12 @@ public class SslContextProvider {
     this.endpointIdentificationAlgorithm = endpointIdentificationAlgorithm;
     this.applicationProtocols = applicationProtocols;
     this.enabledCipherSuites = enabledCipherSuites;
-    this.serverQuicCodecBuilderInitializer = serverQuicCodecBuilderInitializer;
-    this.clientQuicCodecBuilderInitializer = clientQuicCodecBuilderInitializer;
     this.enabledProtocols = enabledProtocols;
     this.keyManagerFactory = keyManagerFactory;
     this.trustManagerFactory = trustManagerFactory;
     this.keyManagerFactoryMapper = keyManagerFactoryMapper;
     this.trustManagerMapper = trustManagerMapper;
     this.crls = crls;
-  }
-
-  public boolean isQuicSupported() {
-    return HttpUtils.supportsQuic(applicationProtocols);
   }
 
   public boolean useWorkerPool() {
@@ -147,8 +130,7 @@ public class SslContextProvider {
       KeyManagerFactory kmf = resolveKeyManagerFactory(serverName);
       TrustManager[] trustManagers = resolveTrustManagers(serverName);
       if (kmf != null || trustManagers != null || !server) {
-        return sslContextMaps[idx].computeIfAbsent(serverName, s -> createContext(server, kmf, trustManagers, s,
-          useAlpn));
+        return sslContextMaps[idx].computeIfAbsent(serverName, s -> createContext(server, kmf, trustManagers, s, useAlpn));
       }
     }
     if (sslContexts[idx] == null) {
@@ -164,49 +146,6 @@ public class SslContextProvider {
     } catch (Exception e) {
       throw new VertxException(e);
     }
-  }
-
-  public SslContext quicSniSslServerContext(boolean useAlpn) {
-    try {
-      SslContext sniSslContext = QuicSslContextBuilder.buildForServerWithSni(serverNameMapping(useAlpn));
-
-      return new VertxSslContext(sniSslContext) {
-        @Override
-        protected void initEngine(SSLEngine engine) {
-          configureEngine(engine, enabledProtocols, null, false);
-        }
-
-        @Override
-        public SslHandler newHandler(ByteBufAllocator alloc, Executor executor) {
-          QuicSslEngine sslEngine = (QuicSslEngine) newEngine(alloc);
-          return QuicUtils.newQuicServerSslHandler(sslEngine, executor, sniSslContext, serverQuicCodecBuilderInitializer);
-        }
-
-        @Override
-        public SslHandler newHandler(ByteBufAllocator alloc, String peerHost, int peerPort, Executor executor) {
-          QuicSslEngine sslEngine = (QuicSslEngine) newEngine(alloc, peerHost, peerPort);
-          return QuicUtils.newQuicServerSslHandler(sslEngine, executor, sniSslContext, serverQuicCodecBuilderInitializer);
-        }
-      };
-    } catch (Exception e) {
-      throw new VertxException(e);
-    }
-  }
-
-  /**
-   *
-   * @param useAlpn
-   * @return
-   */
-  public Mapping<? super String, ? extends SslContext> serverNameMapping(boolean useAlpn) {
-    return (Mapping<String, SslContext>) serverName -> {
-      try {
-        return sslContext(serverName, useAlpn, true);
-      } catch (Exception e) {
-        // Log this
-        return null;
-      }
-    };
   }
 
   /**
@@ -246,22 +185,6 @@ public class SslContextProvider {
     };
   }
 
-  /**
-   * Server name for {@link SniHandler}
-   *
-   * @return the {@link Mapping}
-   */
-  public Mapping<? super String, ? extends QuicSslContext> serverNameMapping(boolean useAlpn) {
-    return (Mapping<String, QuicSslContext>) serverName -> {
-      try {
-        VertxSslContext sslContext = (VertxSslContext) sslContext(serverName, useAlpn, true);
-        return (QuicSslContext) sslContext.unwrap();
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    };
-  }
-
   public SslContext createContext(boolean server, boolean useAlpn) {
     return createContext(server, defaultKeyManagerFactory(), defaultTrustManagers(), null, useAlpn);
   }
@@ -286,40 +209,6 @@ public class SslContextProvider {
         factory.trustManagerFactory(tmf);
       }
       return factory.create();
-    /*  return new VertxSslContext(context) {
-        @Override
-        protected void initEngine(SSLEngine engine) {
-          configureEngine(engine, enabledProtocols, serverName, true);
-        }
-
-        @Override
-        public SslHandler newHandler(ByteBufAllocator alloc, Executor executor) {
-          if (isQuicSupported()) {
-            QuicSslEngine sslEngine = (QuicSslEngine) context.newEngine(alloc);
-            return QuicUtils.newQuicClientSslHandler(sslEngine, executor, context, clientQuicCodecBuilderInitializer);
-          }
-          return super.newHandler(alloc, executor);
-        }
-
-        @Override
-        protected SslHandler newHandler(ByteBufAllocator alloc, boolean startTls, Executor executor) {
-          if (isQuicSupported()) {
-            QuicSslEngine sslEngine = (QuicSslEngine) context.newEngine(alloc);
-            return QuicUtils.newQuicClientSslHandler(sslEngine, executor, context, clientQuicCodecBuilderInitializer);
-          }
-          return super.newHandler(alloc, startTls, executor);
-        }
-
-        @Override
-        protected SslHandler newHandler(ByteBufAllocator alloc, String peerHost, int peerPort, boolean startTls, Executor executor) {
-          if (isQuicSupported()) {
-            QuicSslEngine sslEngine = (QuicSslEngine) context.newEngine(alloc, peerHost, peerPort);
-            return QuicUtils.newQuicClientSslHandler(sslEngine, executor, context, clientQuicCodecBuilderInitializer);
-          }
-          return super.newHandler(alloc, peerHost, peerPort, startTls, executor);
-        }
-      };*/
-
     } catch (Exception e) {
       throw new VertxException(e);
     }
@@ -344,33 +233,6 @@ public class SslContextProvider {
         factory.trustManagerFactory(tmf);
       }
       return factory.create();
-/*
-      return new VertxSslContext(context) {
-        @Override
-        protected void initEngine(SSLEngine engine) {
-          configureEngine(engine, enabledProtocols, serverName, false);
-        }
-
-        @Override
-        public SslHandler newHandler(ByteBufAllocator alloc, Executor executor) {
-          if (isQuicSupported()) {
-            QuicSslEngine sslEngine = (QuicSslEngine) newEngine(alloc);
-            return QuicUtils.newQuicServerSslHandler(sslEngine, executor, context, serverQuicCodecBuilderInitializer);
-          }
-          return super.newHandler(alloc, executor);
-        }
-
-        @Override
-        public SslHandler newHandler(ByteBufAllocator alloc, String peerHost, int peerPort, Executor executor) {
-          if (isQuicSupported()) {
-            QuicSslEngine sslEngine = (QuicSslEngine) newEngine(alloc, peerHost, peerPort);
-            return QuicUtils.newQuicServerSslHandler(sslEngine, executor, context, serverQuicCodecBuilderInitializer);
-          }
-          return super.newHandler(alloc, peerHost, peerPort, executor);
-        }
-      };
-*/
-
     } catch (Exception e) {
       throw new VertxException(e);
     }

@@ -61,8 +61,8 @@ public class Http2H3ClientTest extends Http2ClientTest {
   @Override
   protected void manageMaxQueueRequestsCount(Long max) {
     if (max != null) {
-      serverOptions.getQuicOptions().setHttp3InitialMaxStreamsBidirectional(max);
-      clientOptions.getQuicOptions().setHttp3InitialMaxStreamsBidirectional(max);
+      serverOptions.getQuicOptions().setInitialMaxStreamsBidirectional(max);
+      clientOptions.getQuicOptions().setInitialMaxStreamsBidirectional(max);
     }
     Http3Settings serverSettings = new Http3Settings();
     serverOptions.setInitialHttp3Settings(serverSettings);

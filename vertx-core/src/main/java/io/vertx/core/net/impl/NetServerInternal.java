@@ -10,7 +10,6 @@
  */
 package io.vertx.core.net.impl;
 
-import io.netty.handler.traffic.GlobalTrafficShapingHandler;
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -32,7 +31,5 @@ public interface NetServerInternal extends NetServer {
   SslContextProvider sslContextProvider();
 
   Future<NetServer> listen(ContextInternal context, SocketAddress localAddress);
-
-  GlobalTrafficShapingHandler getTrafficShapingHandler();
 
 }

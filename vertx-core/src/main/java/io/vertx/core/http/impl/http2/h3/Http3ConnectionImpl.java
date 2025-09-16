@@ -362,10 +362,10 @@ abstract class Http3ConnectionImpl extends ConnectionBase implements HttpConnect
     return (Http3ConnectionImpl) super.closeHandler(handler);
   }
 
-  @Override
-  protected void handleClose(Object reason, ChannelPromise promise) {
-    throw new UnsupportedOperationException();
-  }
+//  @Override
+//  protected void handleClose(Object reason, ChannelPromise promise) {
+//    throw new UnsupportedOperationException();
+//  }
 
   protected void handleClose(Object reason, PromiseInternal<Void> promise) {
     ChannelPromise pr = chctx.newPromise();

@@ -19,7 +19,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.net.*;
-import io.vertx.core.net.impl.QuicUtils;
 import io.vertx.core.spi.tls.SslContextFactory;
 
 import javax.net.ssl.*;
@@ -114,12 +113,12 @@ public class SslContextManager {
     this(sslEngineOptions, 256);
   }
 
-  public Future<SslContextProvider> resolveSslContextProvider(ServerSSLOptions options, QuicUtils.ServerQuicCodecBuilderInitializer serverQuicCodecBuilderInitializer, QuicUtils.ClientQuicCodecBuilderInitializer clientQuicCodecBuilderInitializer, ContextInternal ctx) {
+  public Future<SslContextProvider> resolveSslContextProvider(ServerSSLOptions options, ContextInternal ctx) {
     ClientAuth clientAuth = options.getClientAuth();
     if (clientAuth == null) {
       clientAuth = ClientAuth.NONE;
     }
-    return resolveSslContextProvider(options, null, clientAuth, serverQuicCodecBuilderInitializer, clientQuicCodecBuilderInitializer, false, ctx);
+    return resolveSslContextProvider(options, null, clientAuth, false, ctx);
   }
 
   public Future<SslContextProvider> resolveSslContextProvider(ClientSSLOptions options, ContextInternal ctx) {
@@ -134,7 +133,7 @@ public class SslContextManager {
     return resolveSslContextProvider(options, endpointIdentificationAlgorithm, clientAuth, false, ctx);
   }
 
-  public Future<SslContextProvider> resolveSslContextProvider(SSLOptions options, String hostnameVerificationAlgorithm, ClientAuth clientAuth, QuicUtils.ServerQuicCodecBuilderInitializer serverQuicCodecBuilderInitializer, QuicUtils.ClientQuicCodecBuilderInitializer clientQuicCodecBuilderInitializer, boolean force, ContextInternal ctx) {
+  public Future<SslContextProvider> resolveSslContextProvider(SSLOptions options, String hostnameVerificationAlgorithm, ClientAuth clientAuth, boolean force, ContextInternal ctx) {
     Promise<SslContextProvider> promise;
     ConfigKey k = new ConfigKey(options);
     synchronized (this) {
@@ -149,7 +148,7 @@ public class SslContextManager {
       promise = Promise.promise();
       sslContextProviderMap.put(k, promise.future());
     }
-    buildSslContextProvider(options, hostnameVerificationAlgorithm, clientAuth, serverQuicCodecBuilderInitializer, clientQuicCodecBuilderInitializer, force, ctx)
+    buildSslContextProvider(options, hostnameVerificationAlgorithm, clientAuth, force, ctx)
       .onComplete(promise);
     return promise.future();
   }
@@ -163,23 +162,19 @@ public class SslContextManager {
   public Future<SslContextProvider> buildSslContextProvider(SSLOptions sslOptions,
                                                      String hostnameVerificationAlgorithm,
                                                      ClientAuth clientAuth,
-                                                     QuicUtils.ServerQuicCodecBuilderInitializer serverQuicCodecBuilderInitializer,
-                                                     QuicUtils.ClientQuicCodecBuilderInitializer clientQuicCodecBuilderInitializer,
-                                                     boolean force,
+                                                            boolean force,
                                                      ContextInternal ctx) {
     return buildConfig(sslOptions, force, ctx)
-      .map(config -> buildSslContextProvider(sslOptions, hostnameVerificationAlgorithm, supplier, clientAuth, serverQuicCodecBuilderInitializer, clientQuicCodecBuilderInitializer, config));
+      .map(config -> buildSslContextProvider(sslOptions, hostnameVerificationAlgorithm, supplier, clientAuth, config));
   }
 
   private SslContextProvider buildSslContextProvider(SSLOptions sslOptions, String hostnameVerificationAlgorithm,
-                                                     Supplier<SslContextFactory> supplier, ClientAuth clientAuth, QuicUtils.ServerQuicCodecBuilderInitializer serverQuicCodecBuilderInitializer, QuicUtils.ClientQuicCodecBuilderInitializer clientQuicCodecBuilderInitializer, Config config) {
+                                                     Supplier<SslContextFactory> supplier, ClientAuth clientAuth, Config config) {
     return new SslContextProvider(
       useWorkerPool,
       clientAuth,
       hostnameVerificationAlgorithm,
       sslOptions.getApplicationLayerProtocols(),
-      serverQuicCodecBuilderInitializer,
-      clientQuicCodecBuilderInitializer,
       sslOptions.getEnabledCipherSuites(),
       sslOptions.getEnabledSecureTransportProtocols(),
       config.keyManagerFactory,
