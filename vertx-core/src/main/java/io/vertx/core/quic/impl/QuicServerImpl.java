@@ -11,11 +11,18 @@
 package io.vertx.core.quic.impl;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.nio.AbstractNioChannel;
+import io.netty.channel.socket.nio.NioDatagramChannel;
+import io.netty.channel.unix.UnixChannelOption;
 import io.netty.handler.codec.quic.InsecureQuicTokenHandler;
 import io.netty.handler.codec.quic.QuicChannel;
 import io.netty.handler.codec.quic.QuicCodecBuilder;
+import io.netty.handler.codec.quic.QuicCodecDispatcher;
+import io.netty.handler.codec.quic.QuicConnectionIdGenerator;
 import io.netty.handler.codec.quic.QuicServerCodecBuilder;
 import io.netty.handler.codec.quic.QuicSslContext;
 import io.netty.handler.codec.quic.QuicSslContextBuilder;
@@ -27,17 +34,26 @@ import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.internal.tls.SslContextManager;
 import io.vertx.core.internal.tls.SslContextProvider;
+import io.vertx.core.net.SocketAddress;
+import io.vertx.core.net.impl.ServerID;
 import io.vertx.core.quic.QuicConnection;
 import io.vertx.core.quic.QuicServer;
 import io.vertx.core.quic.QuicServerOptions;
+import io.vertx.core.shareddata.LocalMap;
+import io.vertx.core.shareddata.Shareable;
 
-import java.util.List;
+import java.net.StandardSocketOptions;
+import java.nio.channels.DatagramChannel;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 public class QuicServerImpl extends QuicEndpointImpl implements QuicServer {
+
+  public static final String QUIC_SERVER_MAP_KEY = "__vertx.shared.quicServers";
 
   public static QuicServerImpl create(VertxInternal vertx, QuicServerOptions options) {
     return new QuicServerImpl(vertx, new QuicServerOptions(options));
@@ -55,6 +71,32 @@ public class QuicServerImpl extends QuicEndpointImpl implements QuicServer {
   public QuicServer handler(Handler<QuicConnection> handler) {
     this.handler = handler;
     return this;
+  }
+
+  @Override
+  protected ChannelHandler channelHandler(ContextInternal context, SocketAddress bindAddr, SslContextProvider sslContextProvider) {
+    if (options.isLoadBalanced()) {
+      ServerID serverID = new ServerID(bindAddr.port(), bindAddr.host());
+      LocalMap<String, QuicDispatcher> map = vertx.sharedData().getLocalMap(QUIC_SERVER_MAP_KEY);
+      QuicDispatcher dispatcher;
+      synchronized (map) {
+        QuicDispatcher attempt = map.get(serverID.toString());
+        if (attempt == null) {
+          attempt = new QuicDispatcher(serverID, sslContextProvider);
+          map.put(serverID.toString(), attempt);
+        }
+        dispatcher = attempt;
+      }
+      return new ChannelInitializer<>() {
+        @Override
+        protected void initChannel(Channel ch) {
+          dispatcher.register(ch, context, QuicServerImpl.this);
+          ch.pipeline().addLast(dispatcher);
+        }
+      };
+    } else {
+      return super.channelHandler(context, bindAddr, sslContextProvider);
+    }
   }
 
   @Override
@@ -95,5 +137,70 @@ public class QuicServerImpl extends QuicEndpointImpl implements QuicServer {
   @Override
   protected Future<SslContextProvider> createSslContextProvider(SslContextManager manager, ContextInternal context) {
     return manager.resolveSslContextProvider(options.getSslOptions(), context);
+  }
+
+
+  private class QuicDispatcher extends QuicCodecDispatcher implements Shareable {
+
+    private final ServerID serverID;
+    private final SslContextProvider sslContextProvider;
+    private Map<Channel, ServerRegistration> serverMap;
+
+    public QuicDispatcher(ServerID serverID, SslContextProvider sslContextProvider) {
+      this.serverID = serverID;
+      this.sslContextProvider = sslContextProvider;
+      this.serverMap = new ConcurrentHashMap<>();
+    }
+
+    private class ServerRegistration {
+
+      final ContextInternal context;
+      final QuicServerImpl server;
+
+      ServerRegistration(ContextInternal context, QuicServerImpl server) {
+        this.context = context;
+        this.server = server;
+      }
+    }
+
+    void register(Channel ch, ContextInternal context, QuicServerImpl server) {
+      serverMap.put(ch, new ServerRegistration(context, server));
+    }
+
+    @Override
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+      Channel ch = ctx.channel();
+      if (ch instanceof NioDatagramChannel) {
+        // Hack since Netty only supports REUSEPORT for Unix transports
+        AbstractNioChannel.NioUnsafe unsafe = (AbstractNioChannel.NioUnsafe) ch.unsafe();
+        DatagramChannel ch1 = (DatagramChannel) unsafe.ch();
+        ch1.setOption(StandardSocketOptions.SO_REUSEPORT, true);
+      } else {
+        ch.setOption(UnixChannelOption.SO_REUSEPORT, true);
+      }
+      super.channelRegistered(ctx);
+    }
+
+    @Override
+    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+      serverMap.remove(ctx.channel());
+      if (serverMap.isEmpty()) {
+        LocalMap<String, QuicDispatcher> map = vertx.sharedData().getLocalMap(QUIC_SERVER_MAP_KEY);
+        map.remove(serverID.toString());
+      }
+      super.channelUnregistered(ctx);
+    }
+
+    @Override
+    protected void initChannel(Channel channel, int localConnectionIdLength, QuicConnectionIdGenerator idGenerator) throws Exception {
+      for (Map.Entry<Channel, ServerRegistration> entry : serverMap.entrySet()) {
+        if (entry.getKey() == channel) {
+          QuicCodecBuilder<?> builder = entry.getValue().server.initQuicCodecBuilder(entry.getValue().context, sslContextProvider);
+          channel.pipeline().addLast(builder.build());
+          return;
+        }
+      }
+      channel.close();
+    }
   }
 }

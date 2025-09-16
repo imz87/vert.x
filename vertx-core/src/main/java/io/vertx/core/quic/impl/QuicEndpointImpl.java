@@ -14,7 +14,6 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
-import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.codec.quic.QuicCodecBuilder;
 import io.vertx.core.Future;
 import io.vertx.core.internal.ContextInternal;
@@ -61,8 +60,25 @@ public abstract class QuicEndpointImpl implements QuicEndpoint {
 
   protected abstract Future<SslContextProvider> createSslContextProvider(SslContextManager manager, ContextInternal context);
 
+  protected ChannelHandler channelHandler(ContextInternal context, SocketAddress bindAddr, SslContextProvider sslContextProvider) {
+    QuicCodecBuilder<?> codecBuilder = initQuicCodecBuilder(context, sslContextProvider);
+    return codecBuilder.build();
+  }
+
   private Future<Channel> bind(ContextInternal context, SocketAddress bindAddr, SslContextProvider sslContextProvider) {
+    Bootstrap bootstrap = new Bootstrap()
+      .group(context.nettyEventLoop())
+      .channelFactory(vertx.transport().datagramChannelFactory());
     InetSocketAddress addr = new InetSocketAddress(bindAddr.hostName(), bindAddr.port());
+    ChannelHandler handler = channelHandler(context, bindAddr, sslContextProvider);
+    bootstrap.handler(handler);
+    ChannelFuture channelFuture = bootstrap.bind(addr);
+    PromiseInternal<Void> p = context.promise();
+    channelFuture.addListener(p);
+    return p.future().map(v -> channelFuture.channel());
+  }
+
+  protected QuicCodecBuilder<?> initQuicCodecBuilder(ContextInternal context, SslContextProvider sslContextProvider) {
     QuicCodecBuilder<?> codecBuilder = codecBuilder(context, sslContextProvider);
     QuicOptions transportOptions = options.getTransportOptions();
     if (transportOptions.getInitialMaxData() != null) {
@@ -89,16 +105,7 @@ public abstract class QuicEndpointImpl implements QuicEndpoint {
     if (transportOptions.getActiveMigration() != null) {
       codecBuilder.activeMigration(transportOptions.getActiveMigration());
     }
-
-    ChannelHandler codec = codecBuilder.build();
-    Bootstrap bs = new Bootstrap();
-    ChannelFuture channelFuture = bs.group(context.nettyEventLoop())
-      .channelFactory(vertx.transport().datagramChannelFactory())
-      .handler(codec)
-      .bind(addr);
-    PromiseInternal<Void> p = context.promise();
-    channelFuture.addListener(p);
-    return p.future().map(v -> channelFuture.channel());
+    return codecBuilder;
   }
 
   protected void handleBind(Channel channel) {

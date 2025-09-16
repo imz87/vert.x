@@ -81,18 +81,9 @@ public class SslChannelProvider {
     return sslHandler;
   }
 
-  private ChannelHandler createSniHandler(boolean useAlpn, long sslHandshakeTimeout, TimeUnit sslHandshakeTimeoutUnit, HostAndPort remoteAddress) {
+  private SniHandler createSniHandler(boolean useAlpn, long sslHandshakeTimeout, TimeUnit sslHandshakeTimeoutUnit, HostAndPort remoteAddress) {
     Executor delegatedTaskExec = sslContextProvider.useWorkerPool() ? workerPool : ImmediateExecutor.INSTANCE;
-    if (sslContextProvider.isQuicSupported()) {
-      SslContext sslContext = sslContextProvider.quicSniSslServerContext(useAlpn);
-      SslHandler sslHandler;
-      if (remoteAddress != null) {
-        sslHandler = sslContext.newHandler(ByteBufAllocator.DEFAULT, remoteAddress.host(), remoteAddress.port(), delegatedTaskExec);
-      } else {
-        sslHandler = sslContext.newHandler(ByteBufAllocator.DEFAULT, delegatedTaskExec);
-      }
-      sslHandler.setHandshakeTimeout(sslHandshakeTimeout, sslHandshakeTimeoutUnit);
-      return sslHandler;
-    }
-  return new VertxSniHandler(sslContextProvider.serverNameAsyncMapping(delegatedTaskExec, useAlpn), sslHandshakeTimeoutUnit.toMillis(sslHandshakeTimeout), delegatedTaskExec, remoteAddress);  }
+    return new VertxSniHandler(sslContextProvider.serverNameAsyncMapping(delegatedTaskExec, useAlpn), sslHandshakeTimeoutUnit.toMillis(sslHandshakeTimeout), delegatedTaskExec, remoteAddress);
+  }
+
 }

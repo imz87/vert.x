@@ -15,7 +15,6 @@ import io.netty.util.NetUtil;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.quic.ConnectionClose;
-import io.vertx.core.quic.QuicClientOptions;
 import io.vertx.core.quic.QuicServer;
 import io.vertx.core.quic.QuicServerOptions;
 import io.vertx.test.core.LinuxOrOsx;
@@ -62,6 +61,7 @@ public class QuicServerTest extends VertxTestBase {
     QuicServer server = QuicServer.create(vertx, serverOptions());
     server.handler(conn -> {
       assertEquals("test-protocol", conn.applicationLayerProtocol());
+
       conn.handler(stream -> {
         stream.handler(buff -> {
           stream.write(buff);
@@ -152,4 +152,64 @@ public class QuicServerTest extends VertxTestBase {
       server.close().await();
     }
   }
+
+  /*  @Test
+  public void testSoReuse() throws Exception {
+
+    InetSocketAddress addr = new InetSocketAddress("localhost", 4000);
+
+    int num = 2;
+    List<AtomicInteger> received = new ArrayList<>();
+    for (int i = 0;i < num;i++) {
+      AtomicInteger r = new AtomicInteger();
+      received.add(r);
+      new Thread(() -> {
+        try {
+          byte[] buff = new byte[65535];
+          DatagramSocket socket = new DatagramSocket(null);
+          socket.setOption(StandardSocketOptions.SO_REUSEPORT, true);
+          socket.bind(addr);
+          while (true) {
+            DatagramPacket packet = new DatagramPacket(buff, buff.length);
+            socket.receive(packet);
+            r.incrementAndGet();
+          }
+        } catch (Exception e) {
+          e.printStackTrace(System.out);
+        }
+      }).start();
+    }
+
+    int count = 1;
+    AtomicInteger received1 = received.get(0);
+    AtomicInteger received2 = received.get(1);
+    final CountDownLatch latch = new CountDownLatch(count);
+    AtomicInteger sent = new AtomicInteger();
+    Runnable r = () -> {
+      try {
+        DatagramSocket socket = new DatagramSocket();
+        while (received1.get() == 0 || received2.get() == 0) {
+          final byte[] bytes = "data".getBytes();
+          socket.send(new java.net.DatagramPacket(bytes, 0, bytes.length, addr.getAddress(), addr.getPort()));
+          Thread.sleep(1);
+        }
+        socket.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      latch.countDown();
+    };
+
+    ExecutorService executor = Executors.newFixedThreadPool(count);
+    for (int i = 0 ; i < count; i++) {
+      executor.execute(r);
+    }
+
+    latch.await();
+    executor.shutdown();
+
+    System.out.println(received1.get());
+    System.out.println(received2.get());
+    System.out.println(sent.get());
+  }*/
 }

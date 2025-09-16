@@ -210,6 +210,22 @@ public class SslContextProvider {
   }
 
   /**
+   *
+   * @param useAlpn
+   * @return
+   */
+  public Mapping<? super String, ? extends SslContext> serverNameMapping(boolean useAlpn) {
+    return (Mapping<String, SslContext>) serverName -> {
+      try {
+        return sslContext(serverName, useAlpn, true);
+      } catch (Exception e) {
+        // Log this
+        return null;
+      }
+    };
+  }
+
+  /**
    * Server name {@link AsyncMapping} for {@link SniHandler}, mapping happens on a Vert.x worker thread.
    *
    * @return the {@link AsyncMapping}

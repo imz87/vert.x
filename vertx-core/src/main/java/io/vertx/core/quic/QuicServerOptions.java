@@ -17,11 +17,18 @@ import io.vertx.core.net.ServerSSLOptions;
  */
 public class QuicServerOptions extends QuicEndpointOptions {
 
+  public static final boolean DEFAULT_LOAD_BALANCED = false;
+
+  private boolean loadBalanced;
+
   public QuicServerOptions() {
+    loadBalanced = DEFAULT_LOAD_BALANCED;
   }
 
   public QuicServerOptions(QuicServerOptions other) {
     super(other);
+
+    this.loadBalanced = other.loadBalanced;
   }
 
   @Override
@@ -32,5 +39,14 @@ public class QuicServerOptions extends QuicEndpointOptions {
   @Override
   protected ServerSSLOptions getOrCreateSSLOptions() {
     return new ServerSSLOptions();
+  }
+
+  public boolean isLoadBalanced() {
+    return loadBalanced;
+  }
+
+  public QuicServerOptions setLoadBalanced(boolean loadBalanced) {
+    this.loadBalanced = loadBalanced;
+    return this;
   }
 }
